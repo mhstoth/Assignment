@@ -1,0 +1,14 @@
+{{#if errors}}
+<div class="columns">
+  <div class="column is-half">
+    <div class="box content">
+      <p>There was a problem...</p>
+      <ul>
+        {{#each errors}}
+        <li>{{message}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  </div>
+</div>
+{{/if}}

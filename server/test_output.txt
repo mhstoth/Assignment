@@ -1,0 +1,100 @@
+
+> discoverRegensburg@0.0.1 test
+> ./node_modules/mocha/bin/_mocha --ui tdd src/test/**/*.js -exit
+
+
+
+  Placemark API tests
+    1) "before each" hook for "create a placemark"
+    2) "after each" hook for "create a placemark"
+
+  User API tests
+    3) "before each" hook for "create a user"
+    4) "after each" hook for "create a user"
+
+  Placemark Model tests
+    ✔ create a placemark | succeed
+    ✔ get placemark by id | succeed
+    ✔ get placemark by id | fail not found
+    ✔ update placemark | succeed
+    ✔ update placemark | fail not found
+    ✔ delete placemark | succeed
+    ✔ delete placemark | fail not found
+    ✔ create placemark | fail missing title
+    ✔ create placemark | fail empty string title
+    ✔ create placemark | fail invalid latitude
+    ✔ create placemark | fail invalid longitude
+    ✔ delete all placemarks | succeed
+
+  User Model tests
+    ✔ create a user | succeed
+    ✔ create user | fail bad param
+    ✔ get user by email | succeed
+    ✔ get user by email | fail bad param
+    ✔ get user by email | fail not found
+    ✔ get user by id | succeed
+    ✔ get user by id | fail not found
+    ✔ update user | succeed
+    ✔ update user | fail not found
+    ✔ delete user | succeed
+    ✔ delete user | fail not found
+    ✔ delete all users | succeed
+
+
+  24 passing (222ms)
+  4 failing
+
+  1) Placemark API tests
+       "before each" hook for "create a placemark":
+     AxiosError: Request failed with status code 404
+      at settle (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/adapters/http.js:793:11)
+      at IncomingMessage.emit (node:events:536:35)
+      at endReadableNT (node:internal/streams/readable:1698:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+      at Axios.request (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/Axios.js:45:41)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async Object.deleteAllPlacemarks (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/placemark-service.js:34:17)
+      at async Context.<anonymous> (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/api/placemark-api-test.js:10:5)
+
+  2) Placemark API tests
+       "after each" hook for "create a placemark":
+     AxiosError: Request failed with status code 404
+      at settle (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/adapters/http.js:793:11)
+      at IncomingMessage.emit (node:events:536:35)
+      at endReadableNT (node:internal/streams/readable:1698:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+      at Axios.request (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/Axios.js:45:41)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async Object.deleteAllPlacemarks (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/placemark-service.js:34:17)
+      at async Context.<anonymous> (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/api/placemark-api-test.js:16:5)
+
+  3) User API tests
+       "before each" hook for "create a user":
+     AxiosError: Request failed with status code 404
+      at settle (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/adapters/http.js:793:11)
+      at IncomingMessage.emit (node:events:536:35)
+      at endReadableNT (node:internal/streams/readable:1698:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+      at Axios.request (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/Axios.js:45:41)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async Object.deleteAllUsers (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/placemark-service.js:24:17)
+      at async Context.<anonymous> (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/api/user-api-test.js:8:5)
+
+  4) User API tests
+       "after each" hook for "create a user":
+     AxiosError: Request failed with status code 404
+      at settle (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/adapters/http.js:793:11)
+      at IncomingMessage.emit (node:events:536:35)
+      at endReadableNT (node:internal/streams/readable:1698:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+      at Axios.request (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/node_modules/axios/lib/core/Axios.js:45:41)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async Object.deleteAllUsers (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/placemark-service.js:24:17)
+      at async Context.<anonymous> (file:///Users/moritzhutzler/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/OTH%20Regensburg/Semester%207/Full%20Stack%20Development/Assignment/discoverRegensburg/server/src/test/api/user-api-test.js:12:5)
+
+
+
