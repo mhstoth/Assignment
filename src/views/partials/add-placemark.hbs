@@ -1,0 +1,46 @@
+<form action="/dashboard/addplacemark" method="POST" enctype="multipart/form-data">
+  <div class="field">
+    <label class="label">Placemark Title</label>
+    <input class="input" type="text" placeholder="Enter placemark title" name="title" />
+  </div>
+  <div class="field">
+    <label class="label">Description</label>
+    <textarea class="textarea" placeholder="Enter description" name="description"></textarea>
+  </div>
+  <label class="label">Image</label>
+  <div class="field">
+    {{> placemark-image}}
+  </div>
+  <label class="label">Category</label>
+  <div class="field is-horizontal">
+    <div class="field-body">
+      <div class="control">
+        <div class="select is-fullwitdh">
+          <select name="selectedCategory">
+            {{#each categories}}
+            <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="field-body">
+      <div class="control">
+        <input class="input" type="text" placeholder="Enter custom category" name="customCategory" />
+      </div>
+    </div>
+  </div>
+  <div class="field is-horizontal">
+    <div class="field-body">
+      <div class="field">
+        <label class="label">Latitude</label>
+        <input class="input" type="number" step="any" placeholder="Enter latitude" name="latitude" />
+      </div>
+      <div class="field">
+        <label class="label">Longitude</label>
+        <input class="input" type="number" step="any" placeholder="Enter longitude" name="longitude" />
+      </div>
+    </div>
+  </div>
+  <button class="button is-link">Add Placemark</button>
+</form>

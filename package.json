@@ -1,6 +1,49 @@
 {
+  "name": "discoverRegensburg",
+  "version": "0.0.1",
+  "description": "This is my Placemark discoverRegensburg App",
+  "license": "ISC",
+  "author": "Moritz Hutzler",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "lint": "./node_modules/.bin/eslint . --ext .js",
+    "test": "./node_modules/mocha/bin/_mocha --ui tdd src/test/**/*.js --exit"
+  },
+  "engines": {
+    "node": ">=16"
+  },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "chai": "^6.2.1",
-    "mocha": "^11.7.5"
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "mocha": "^11.7.5",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.4.2"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@hapi/cookie": "^12.0.1",
+    "@hapi/hapi": "^21.4.3",
+    "@hapi/inert": "^7.1.0",
+    "@hapi/vision": "^7.0.3",
+    "axios": "^1.13.2",
+    "cloudinary": "^2.8.0",
+    "dotenv": "^17.2.3",
+    "handlebars": "^4.7.8",
+    "hapi-auth-jwt2": "^11.0.0",
+    "hapi-swagger": "^17.3.2",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "lowdb": "^7.0.1",
+    "mais-mongoose-seeder": "^1.0.7",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.2",
+    "uuid": "^13.0.0"
   }
 }

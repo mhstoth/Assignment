@@ -1,0 +1,52 @@
+{{#if img}}
+<div class="card mb-3">
+  <div class="card-image">
+    <figure class="image is-4by3">
+      <img src="{{img}}" alt="{{title}}">
+    </figure>
+  </div>
+</div>
+{{/if}}
+
+<div class="image-upload-container">
+  <img class="image-preview mb-2" src="" alt="Preview"
+    style="display: none; width: 64px; height: 64px; object-fit: cover; border-radius: 4px; border: 1px solid #dbdbdb;">
+
+  <div class="file has-name is-small is-fullwidth">
+    <label class="file-label">
+      <input class="file-input" name="imagefile" type="file" accept="image/png, image/jpeg">
+      <span class="file-cta">
+        <span class="file-icon">
+          <i class="fas fa-upload"></i>
+        </span>
+        <span class="file-label">
+          Choose…
+        </span>
+      </span>
+      <span class="file-name">No file</span>
+    </label>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.file-input').forEach(function (fileInput) {
+    fileInput.onchange = function () {
+      if (fileInput.files.length > 0) {
+        var file = fileInput.files[0];
+        var container = fileInput.closest('.image-upload-container');
+        var fileName = container.querySelector('.file-name');
+        var preview = container.querySelector('.image-preview');
+
+        fileName.textContent = file.name;
+
+        // Show preview
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+  });
+</script>

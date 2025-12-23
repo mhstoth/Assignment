@@ -1,0 +1,31 @@
+{
+  "users": [
+    {
+      "firstName": "test",
+      "lastName": "test",
+      "email": "test@test.de",
+      "password": "1",
+      "_id": "d97d6f38-fcfe-42ad-920a-e9fff3b9dfec"
+    }
+  ],
+  "placemarks": [
+    {
+      "userid": "d97d6f38-fcfe-42ad-920a-e9fff3b9dfec",
+      "title": "test",
+      "latitude": 78,
+      "longitude": 78,
+      "category": "Bars",
+      "description": "test",
+      "_id": "77061805-495b-4b51-95ca-71a6b24e87de"
+    },
+    {
+      "userid": "d97d6f38-fcfe-42ad-920a-e9fff3b9dfec",
+      "title": "test",
+      "latitude": 89,
+      "longitude": 89,
+      "category": "Bars",
+      "description": "test",
+      "_id": "230a6e86-71d2-46cb-a29c-fae392236514"
+    }
+  ]
+}
