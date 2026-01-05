@@ -1,113 +1,178 @@
 # discoverRegensburg
 
-This is a Placemark application for discovering locations in Regensburg. It allows users to manage points of interest (Placemarks) with details such as location, categories, and descriptions.
+A full-stack Placemark application for discovering locations in Regensburg. Built with a **Hapi.js REST API** backend and a **SvelteKit** frontend.
 
-## Features (Level 2 Enhanced)
+## Features (Level 3)
 
-This project currently implements the **Level 2** requirements:
+### Backend (Hapi.js)
+- **User Accounts**: Signup, Login with JWT Authentication
+- **Password Security**: bcrypt hashing & salting
+- **Placemark Management**: Full CRUD operations
+- **Image Upload**: Cloudinary integration
+- **REST API**: Fully documented with Swagger
+- **Database**: MongoDB with Mongoose ODM
 
-*   **User Accounts**: Signup, Login, and Session-based Authentication.
-*   **JWT Authentication**: Secure API access using JSON Web Tokens.
-*   **Placemark Management**:
-    *   Create, Read, Update, and Delete Placemarks.
-    *   Attributes: Name, Description, Location (Latitude, Longitude), Category.
-    *   **Image Upload**: Upload images to Cloudinary via API or Web Interface.
-*   **API**: 
-    *   Fully documented REST API using **Swagger**.
-    *   Secured endpoints.
-*   **Data Persistence**: **MongoDB** database using Mongoose ODM.
-*   **Testing**: Comprehensive Unit Tests for Models, API, and Authentication flow.
+### Frontend (SvelteKit)
+- **UI**
+- **Dashboard**: Collapsible sections for Map, Form, and Placemarks
+- **Interactive Map**: Leaflet with Category Layers
+- **Analytics Charts**: svelte-frappe-charts for statistics
+- **Admin Panel**: User management and analytics
+- **Responsive Design**: Mobile-friendly layout
 
 ## Tech Stack
 
-*   **Runtime**: Node.js
-*   **Framework**: Hapi.js
-*   **Authentication**: `hapi-auth-cookie` (Web), `hapi-auth-jwt2` (API)
-*   **Database**: MongoDB
-*   **Documentation**: Hapi Swagger
-*   **Testing**: Mocha, Chai
-*   **Validation**: Joi
-*   **Styling**: Bulma CSS
-*   **Image Hosting**: Cloudinary
+| Layer | Technology |
+|-------|------------|
+| Backend | Node.js, Hapi.js |
+| Frontend | SvelteKit, TypeScript, Svelte 5 |
+| Database | MongoDB, Mongoose |
+| Auth | JWT, bcrypt |
+| Maps | Leaflet |
+| Charts | svelte-frappe-charts |
+| Styling | Bulma CSS, Custom CSS |
+| Images | Cloudinary |
+| Icons | Font Awesome 5 |
 
-## Installation
+## Quick Start
 
-1.  Clone the repository.
-2.  Navigate to the server directory:
-    ```bash
-    cd server
-    ```
-3.  Install dependencies:
-    ```bash
-    npm install
-    ```
-4.  Create a `.env` file in the `server` directory with the following variables:
-    ```env
-    # Web session cookie (Hapi cookie auth)
-    COOKIE_NAME=discoverRegensburg
-    COOKIE_PASSWORD=change-me-to-a-long-random-secret
 
-    # MongoDB
-    DB=mongodb://localhost/playtime
+### 1. Clone & Install
 
-    # Cloudinary (used by image upload)
-    cloud_name=your_cloud_name
-    api_key=your_api_key
-    api_secret=your_api_secret
-    ```
+```bash
+# Clone the repository
+git clone <repo-url>
+cd Assignment_Level_3
 
-## Usage
+# Install backend dependencies
+npm install
 
-### Running the Application
+# Install frontend dependencies
+cd client
+npm install
+cd ..
+```
 
-To start the server locally:
+### 2. Environment Variables
 
+Create a `.env` file in the root directory:
+
+```env
+# Cookie Authentication
+COOKIE_NAME=discoverRegensburg
+COOKIE_PASSWORD=your-secret-key-min-32-chars
+
+# MongoDB
+DB=mongodb://localhost/discoverRegensburg
+
+# Cloudinary
+cloud_name=your_cloud_name
+api_key=your_api_key
+api_secret=your_api_secret
+```
+
+Create a `.env` file in the `client/` directory:
+
+```env
+PUBLIC_API_BASE_URL=http://localhost:3000
+```
+
+### 3. Run the Application
+
+**Terminal 1 - Backend:**
 ```bash
 npm run dev
 ```
+Backend runs at `http://localhost:3000`
 
-The application will be available at `http://localhost:3000`.
+**Terminal 2 - Frontend:**
+```bash
+cd client
+npm run dev
+```
+Frontend runs at `http://localhost:5173`
 
-### API Documentation
+## Default Users (Seeded)
 
-The interactive API documentation is available at:
-`http://localhost:3000/documentation`
-`https://discover-regensburg-3.onrender.com/`
+| Email | Password | Role |
+|-------|----------|------|
+| `moritz@diehutzlers.de` | `1` | Admin |
+| `jannis@diehutzlers.de` | `1` | User |
+
+## API Documentation
+
+Interactive Swagger documentation available at:
+- Local: `http://localhost:3000/documentation`
+- Production: `https://discover-regensburg-LEVEL-3.onrender.com/documentation`
 
 ### API Authentication
 
-1.  Get a token:
-    - `POST /api/users/authenticate` with JSON `{ "email": "...", "password": "..." }`
-2.  Call secured endpoints with header:
-    - `Authorization: Bearer <token>`
+```bash
+# 1. Get JWT token
+POST /api/users/authenticate
+Body: { "email": "moritz@diehutzlers.de", "password": "1" }
 
-### Running Tests
+# 2. Use token in header
+Authorization: Bearer <token>
+```
 
-To execute the unit tests:
+## Project Structure
+
+```
+Assignment_Level_3/
+├── src/                    # Hapi.js Backend
+│   ├── api/               # REST API endpoints
+│   ├── controllers/       # Web controllers
+│   ├── models/            # Mongoose schemas
+│   │   └── mongo/
+│   │       └── seed-data.js  # Demo data
+│   ├── views/             # Handlebars templates
+│   └── test/              # Unit & API tests
+│
+├── client/                 # SvelteKit Frontend
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── api.ts     # API client
+│   │   │   ├── auth.ts    # Auth helpers
+│   │   │   └── components/
+│   │   │       ├── LeafletMap.svelte
+│   │   │       └── Navigation.svelte
+│   │   └── routes/
+│   │       ├── +page.svelte      # Homepage
+│   │       ├── login/
+│   │       ├── signup/
+│   │       ├── dashboard/        # Main app
+│   │       ├── map/              # Full map view
+│   │       └── admin/            # Admin panel
+│   └── static/
+│       └── favicon.png
+│
+└── package.json
+```
+
+## Running Tests
 
 ```bash
 npm run test
 ```
 
-## Admin User
+## Deployment
 
-The application seeds demo data on startup (and drops collections):
+- **Backend**: Render.com (Level 2 Requirement)
+- **Frontend**: Local development (Deployment not required for Level 3)
 
-*   **Email**: `moritz@diehutzlers.de`
-*   **Password**: `1`
-*   **Role**: Admin (`isAdmin: true`)
+Backend Production URL: `https://discover-regensburg-backend.onrender.com/`
 
+## Level 3 Requirements Checklist
 
-## Deployment 
+| Requirement | Feature | Status |
+|-------------|---------|--------|
+| **Charts** | Simple / Single Chart type | ✅ svelte-frappe-charts (Bar + Pie) |
+| **Maps** | Maps with Layers (for categories) | ✅ Leaflet with LayerControl |
+| **Images** | Single Images per POI | ✅ Cloudinary integration |
+| **Authentication** | Hashing & salting passwords | ✅ bcrypt |
+| **Architecture** | SvelteKit | ✅ SvelteKit + TypeScript |
 
-* `https://discover-regensburg-3.onrender.com/`
+## Author
 
-
-
-## Project Structure
-
-*   `server/src/api`: API endpoints, JWT logic, and Swagger validation.
-*   `server/src/controllers`: Controllers for handling web routes.
-*   `server/src/models`: Mongoose schemas and database connection.
-*   `server/src/views`: Handlebars templates for the frontend.
-*   `server/src/test`: Unit and API tests.
+Moritz Hutzler - OTH Regensburg, Full Stack Development WS 2025/26

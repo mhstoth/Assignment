@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { db } from "../models/db.js";
 import { UserSpecPlus } from "../models/joi-schemas.js";
 
@@ -46,7 +47,11 @@ export const accountsController = {
     handler: async function login(request, h) {
       const { email, password } = request.payload;
       const user = await db.userStore.getUserByEmail(email.toLowerCase());
-      if (!user || user.password !== password) {
+      if (!user) {
+        return h.redirect("/");
+      }
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
         return h.redirect("/");
       }
       request.cookieAuth.set({ id: user._id });

@@ -46,6 +46,12 @@ export async function createServer({ port, host } = {}) {
   const server = Hapi.server({
     port: resolvedPort,
     host: resolvedHost,
+    routes: {
+      cors: {
+        origin: ["http://localhost:5173", "http://localhost:4173", "http://localhost:3000"],
+        credentials: true,
+      },
+    },
   });
 
   server.validator(Joi);

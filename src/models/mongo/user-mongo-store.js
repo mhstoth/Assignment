@@ -1,4 +1,5 @@
 import Mongoose from "mongoose";
+import bcrypt from "bcrypt";
 import { User } from "./user.js";
 
 export const userMongoStore = {
@@ -20,7 +21,8 @@ export const userMongoStore = {
       return null;
     }
     const normalizedEmail = user.email.toLowerCase();
-    const newUser = new User({ ...user, email: normalizedEmail, isAdmin: Boolean(user.isAdmin) });
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const newUser = new User({ ...user, email: normalizedEmail, password: hashedPassword, isAdmin: Boolean(user.isAdmin) });
     const userObj = await newUser.save();
     const u = await this.getUserById(userObj._id);
     return u;

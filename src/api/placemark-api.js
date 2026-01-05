@@ -31,6 +31,33 @@ export const placemarkApi = {
     auth: "jwt",
     handler: async function find(request, h) {
       try {
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
+        const placemarks = await db.placemarkStore.getUserPlacemarks(userId);
+        if (placemarks) {
+          return placemarks;
+        }
+        return Boom.notFound("Placemarks not found");
+      } catch (error) {
+        return Boom.badRequest("Database Error");
+      }
+    },
+    tags: ["api"],
+    description: "Get all placemarks for the authenticated user",
+    notes: "Returns details of all placemarks belonging to the authenticated user",
+    response: { schema: PlacemarkArraySpec, failAction: "log" },
+  },
+
+  findAllForAdmin: {
+    auth: "jwt",
+    handler: async function findAllForAdmin(request, h) {
+      try {
+        const isAdmin = request.auth.credentials?.isAdmin === true;
+        if (!isAdmin) {
+          return Boom.forbidden("Admin privileges required");
+        }
         const placemarks = await db.placemarkStore.getAllPlacemarks();
         if (placemarks) {
           return placemarks;
@@ -41,8 +68,8 @@ export const placemarkApi = {
       }
     },
     tags: ["api"],
-    description: "Get all placemarks",
-    notes: "Returns details of all placemarks",
+    description: "Get all placemarks (admin only)",
+    notes: "Returns all placemarks in the system - requires admin JWT",
     response: { schema: PlacemarkArraySpec, failAction: "log" },
   },
 
@@ -50,8 +77,15 @@ export const placemarkApi = {
     auth: "jwt",
     handler: async function findOne(request, h) {
       try {
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
         const placemark = await db.placemarkStore.getPlacemarkById(request.params.id);
         if (placemark) {
+          if (placemark.userid?.toString() !== userId) {
+            return Boom.forbidden("You can only access your own placemarks");
+          }
           return placemark;
         }
         return Boom.notFound("Placemark not found");
@@ -61,7 +95,7 @@ export const placemarkApi = {
     },
     tags: ["api"],
     description: "Get a specific placemark",
-    notes: "Returns placemark details",
+    notes: "Returns placemark details - only if owned by the authenticated user",
     validate: { params: { id: IdSpec }, failAction: (request, h, err) => { throw err; } },
     response: { schema: PlacemarkSpec, failAction: "log" },
   },
@@ -70,9 +104,20 @@ export const placemarkApi = {
     auth: "jwt",
     handler: async function update(request, h) {
       try {
-        const placemark = await db.placemarkStore.updatePlacemarkById(request.params.id, request.payload);
-        if (placemark) {
-          return placemark;
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
+        const placemark = await db.placemarkStore.getPlacemarkById(request.params.id);
+        if (!placemark) {
+          return Boom.notFound("Placemark not found");
+        }
+        if (placemark.userid?.toString() !== userId) {
+          return Boom.forbidden("You can only update your own placemarks");
+        }
+        const updatedPlacemark = await db.placemarkStore.updatePlacemarkById(request.params.id, request.payload);
+        if (updatedPlacemark) {
+          return updatedPlacemark;
         }
         return Boom.notFound("Placemark not found");
       } catch (error) {
@@ -81,7 +126,7 @@ export const placemarkApi = {
     },
     tags: ["api"],
     description: "Update a placemark",
-    notes: "Updates placemark details",
+    notes: "Updates placemark details - only if owned by the authenticated user",
     validate: { params: { id: IdSpec }, payload: PlacemarkSpecPlus, failAction: (request, h, err) => { throw err; } },
     response: { schema: PlacemarkSpec, failAction: "log" },
   },
@@ -90,8 +135,15 @@ export const placemarkApi = {
     auth: "jwt",
     handler: async function deleteOne(request, h) {
       try {
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
         const placemark = await db.placemarkStore.getPlacemarkById(request.params.id);
         if (placemark) {
+          if (placemark.userid?.toString() !== userId) {
+            return Boom.forbidden("You can only delete your own placemarks");
+          }
           if (placemark.img) {
             await imageStore.deleteImage(placemark.img);
           }
@@ -105,7 +157,7 @@ export const placemarkApi = {
     },
     tags: ["api"],
     description: "Delete a specific placemark",
-    notes: "Deletes a placemark from the system",
+    notes: "Deletes a placemark from the system - only if owned by the authenticated user",
     validate: { params: { id: IdSpec }, failAction: (request, h, err) => { throw err; } },
   },
 
@@ -178,9 +230,16 @@ export const placemarkApi = {
     auth: "jwt",
     handler: async function (request, h) {
       try {
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
         const placemark = await db.placemarkStore.getPlacemarkById(request.params.id);
         if (!placemark) {
           return Boom.notFound("Placemark not found");
+        }
+        if (placemark.userid?.toString() !== userId) {
+          return Boom.forbidden("You can only upload images to your own placemarks");
         }
         const file = request.payload.imagefile;
         if (file && Object.keys(file).length > 0) {
