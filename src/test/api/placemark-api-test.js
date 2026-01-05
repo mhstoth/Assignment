@@ -15,6 +15,9 @@ suite("Placemark API tests", () => {
 
   teardown(async () => {
     await placemarkService.deleteAllPlacemarks();
+    placemarkService.clearAuth();
+    await placemarkService.createUser(users.adminUser);
+    await placemarkService.authenticate(users.adminUser);
     await placemarkService.deleteAllUsers();
     placemarkService.clearAuth();
   });

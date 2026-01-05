@@ -3,13 +3,21 @@ import { db } from "../models/db.js";
 import { UserSpec, UserSpecPlus, UserArraySpec, UserCredentialsSpec, IdSpec, JwtAuthSpec } from "../models/joi-schemas.js";
 import { createToken } from "./jwt-utils.js";
 
+const requireAdmin = (request, h) => {
+  if (!request.auth?.credentials?.isAdmin) {
+    throw Boom.forbidden("Admin privileges required");
+  }
+  return h.continue;
+};
+
 export const userApi = {
 
   authenticate: {
     auth: false,
     handler: async function (request, h) {
       try {
-        const user = await db.userStore.getUserByEmail(request.payload.email);
+        const email = request.payload.email.toLowerCase().trim();
+        const user = await db.userStore.getUserByEmail(email);
         if (!user) {
           return Boom.unauthorized("User not found");
         }
@@ -33,7 +41,12 @@ export const userApi = {
     auth: false,
     handler: async function create(request, h) {
       try {
-        const user = await db.userStore.addUser(request.payload);
+        const userData = {
+          ...request.payload,
+          email: request.payload.email.toLowerCase().trim(),
+          isAdmin: Boolean(request.payload.isAdmin),
+        };
+        const user = await db.userStore.addUser(userData);
         if (user) {
           return h.response(user).code(201);
         }
@@ -51,6 +64,7 @@ export const userApi = {
 
   find: {
     auth: "jwt",
+    pre: [{ method: requireAdmin }],
     handler: async function find(request, h) {
       try {
         const users = await db.userStore.getAllUsers();
@@ -63,13 +77,14 @@ export const userApi = {
       }
     },
     tags: ["api"],
-    description: "Get all users",
-    notes: "Returns details of all users",
+    description: "Get all users (admin only)",
+    notes: "Returns details of all users - requires admin JWT",
     response: { schema: UserArraySpec, failAction: "log" },
   },
 
   findOne: {
     auth: "jwt",
+    pre: [{ method: requireAdmin }],
     handler: async function findOne(request, h) {
       try {
         const user = await db.userStore.getUserById(request.params.id);
@@ -82,17 +97,19 @@ export const userApi = {
       }
     },
     tags: ["api"],
-    description: "Get a specific user",
-    notes: "Returns user details",
+    description: "Get a specific user (admin only)",
+    notes: "Returns user details - requires admin JWT",
     validate: { params: { id: IdSpec }, failAction: (request, h, err) => { throw err; } },
     response: { schema: UserSpec, failAction: "log" },
   },
 
   update: {
     auth: "jwt",
+    pre: [{ method: requireAdmin }],
     handler: async function update(request, h) {
       try {
-        const user = await db.userStore.updateUserById(request.params.id, request.payload);
+        const { isAdmin, ...userData } = request.payload;
+        const user = await db.userStore.updateUserById(request.params.id, userData);
         if (user) {
           return user;
         }
@@ -102,14 +119,15 @@ export const userApi = {
       }
     },
     tags: ["api"],
-    description: "Update a user",
-    notes: "Updates user details",
+    description: "Update a user (admin only)",
+    notes: "Updates user details - requires admin JWT",
     validate: { params: { id: IdSpec }, payload: UserSpecPlus, failAction: (request, h, err) => { throw err; } },
     response: { schema: UserSpec, failAction: "log" },
   },
 
   delete: {
     auth: "jwt",
+    pre: [{ method: requireAdmin }],
     handler: async function deleteOne(request, h) {
       try {
         const user = await db.userStore.deleteUserById(request.params.id);
@@ -122,13 +140,14 @@ export const userApi = {
       }
     },
     tags: ["api"],
-    description: "Delete a specific user",
-    notes: "Deletes a user from the system",
+    description: "Delete a specific user (admin only)",
+    notes: "Deletes a user from the system - requires admin JWT",
     validate: { params: { id: IdSpec }, failAction: (request, h, err) => { throw err; } },
   },
 
   deleteAll: {
     auth: "jwt",
+    pre: [{ method: requireAdmin }],
     handler: async function deleteAll(request, h) {
       try {
         const users = await db.userStore.deleteAllUsers();
@@ -141,7 +160,7 @@ export const userApi = {
       }
     },
     tags: ["api"],
-    description: "Delete all users",
-    notes: "Deletes all users from the system (Admin access suggested)",
+    description: "Delete all users (admin only)",
+    notes: "Deletes all users from the system - requires admin JWT",
   },
 }

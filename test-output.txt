@@ -1,0 +1,138 @@
+Database connected to assignment on ac-efjrr9r-shard-00-00.vfgmckn.mongodb.net
+▼ User Model tests
+  ✔ create a user | succeed
+  ✔ create user | fail bad param
+  ✔ get user by email | succeed
+  ✔ get user by email | fail bad param
+{
+  users: {
+    moritz: {
+      firstName: 'Moritz',
+      lastName: 'Hutzler',
+      email: 'moritz@diehutzlers.de',
+      password: '1',
+      isAdmin: true,
+      _id: new ObjectId('695bb026749853f7752273b6'),
+      __v: 0
+    },
+    jannis: {
+      firstName: 'Jannis',
+      lastName: 'Hutzler',
+      email: 'jannis@diehutzlers.de',
+      password: '1',
+      isAdmin: false,
+      _id: new ObjectId('695bb026749853f7752273b9'),
+      __v: 0
+    }
+  },
+  placemarks: {
+    steinerneBruecke: {
+      title: 'Steinerne Brücke',
+      userid: '695bb026749853f7752273b6',
+      category: 'Sightseeing',
+      description: 'Mittelalterliche Steinbrücke aus dem 12. Jahrhundert, UNESCO-Weltkulturerbe',
+      img: 'https://images.unsplash.com/photo-1666293438241-9f9b3654f118?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      latitude: 49.0225,
+      longitude: 12.0969,
+      _id: new ObjectId('695bb026749853f7752273c9'),
+      __v: 0
+    },
+    dom: {
+      title: 'Regensburger Dom',
+      userid: '695bb026749853f7752273b6',
+      category: 'Sightseeing',
+      description: 'Gotische Kathedrale St. Peter, Wahrzeichen der Stadt',
+      img: 'https://images.unsplash.com/photo-1659100826967-5616a3b1501e?q=80&w=940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      latitude: 49.0192,
+      longitude: 12.0975,
+      _id: new ObjectId('695bb026749853f7752273ce'),
+      __v: 0
+    },
+    wurstkuchl: {
+      title: 'Historische Wurstkuchl',
+      userid: '695bb026749853f7752273b6',
+      category: 'Restaurants',
+      description: 'Älteste Bratwurstküche der Welt, seit 1146',
+      img: 'https://images.unsplash.com/photo-1724078770616-2f8e19d75761?q=80&w=872&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      latitude: 49.0224,
+      longitude: 12.0965,
+      _id: new ObjectId('695bb027749853f7752273d2'),
+      __v: 0
+    },
+    kneitinger: {
+      title: 'Kneitinger Keller',
+      userid: '695bb026749853f7752273b9',
+      category: 'Bars',
+      description: 'Traditioneller Biergarten mit Hausbrauerei',
+      img: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1000',
+      latitude: 49.018,
+      longitude: 12.092,
+      _id: new ObjectId('695bb027749853f7752273d5'),
+      __v: 0
+    },
+    scala: {
+      title: 'Scala Club',
+      userid: '695bb026749853f7752273b9',
+      category: 'Clubs',
+      description: 'Beliebter Nachtclub im Herzen von Regensburg',
+      img: 'https://imageflow.rausgegangen.de/url/https%3A//s3.eu-central-1.amazonaws.com/rausgegangen/TPVOzMuRautpFSBN5wuQ_aleksandr-popov-9vDdkxSCAD4-unsplash.jpg?width=1200&height=900&mode=crop',
+      latitude: 49.015,
+      longitude: 12.095,
+      _id: new ObjectId('695bb027749853f7752273d8'),
+      __v: 0
+    }
+  }
+}
+  ✔ get user by email | fail not found
+  ✔ get user by id | succeed
+  ✔ get user by id | fail not found
+  ✔ update user | succeed
+  ✔ update user | fail not found
+  ✔ delete user | succeed
+bad id
+  ✔ delete user | fail not found
+  ✔ delete all users | succeed
+  ✔ create admin user | isAdmin true
+  ✔ create regular user | isAdmin false
+  ✔ get all users | includes isAdmin flag
+  ✔ get user by email | admin user has isAdmin true
+▼ Placemark Model tests
+  ✔ create a placemark | succeed
+  ✔ create a placemark with image | succeed with favicon
+  ✔ get placemark by id | succeed
+  ✔ get placemark by id | fail not found
+  ✔ update placemark | succeed
+  ✔ update placemark | fail not found
+  ✔ delete placemark | succeed
+  ✔ delete placemark | fail not found
+  ✔ create placemark | fail missing title
+  ✔ create placemark | fail empty string title
+  ✔ create placemark | fail invalid latitude
+  ✔ create placemark | fail invalid longitude
+  ✔ delete all placemarks | succeed
+▼ ImageStore tests
+  ✔ upload and delete image | succeed with favicon
+  ✔ upload image | fail with invalid data
+  ✔ deleteImage | ignore non-cloudinary urls
+  ✔ deleteImage | handle null/undefined
+▼ User API tests
+  ✔ create a user
+  ✔ get all users
+  ✔ get user
+  ✔ delete all users
+  ✔ create admin user | isAdmin true
+  ✔ create regular user | isAdmin false
+  ✔ get all users | includes isAdmin status
+  ✔ delete user by id
+  ✔ update user
+▼ Placemark API tests
+  ✔ create a placemark
+  ✔ get all placemarks
+  ✔ get placemark
+  ✔ delete placemark
+  ✔ delete all placemarks
+  ✔ delete all user placemarks only deletes own placemarks
+  ✔ upload image to placemark via api
+▼ Authentication API tests
+  ✔ authenticate
+  ✔ verify Token

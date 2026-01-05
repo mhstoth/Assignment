@@ -23,7 +23,7 @@ This project currently implements the **Level 2** requirements:
 *   **Runtime**: Node.js
 *   **Framework**: Hapi.js
 *   **Authentication**: `hapi-auth-cookie` (Web), `hapi-auth-jwt2` (API)
-*   **Database**: MongoDB (Mongoose)
+*   **Database**: MongoDB
 *   **Documentation**: Hapi Swagger
 *   **Testing**: Mocha, Chai
 *   **Validation**: Joi
@@ -32,7 +32,7 @@ This project currently implements the **Level 2** requirements:
 
 ## Installation
 
-1.  Clone the repository (if you haven't already).
+1.  Clone the repository.
 2.  Navigate to the server directory:
     ```bash
     cd server
@@ -72,7 +72,7 @@ The application will be available at `http://localhost:3000`.
 
 The interactive API documentation is available at:
 `http://localhost:3000/documentation`
-`https://discover-regensburg-2.onrender.com/`
+`https://discover-regensburg-3.onrender.com/`
 
 ### API Authentication
 
@@ -100,7 +100,7 @@ The application seeds demo data on startup (and drops collections):
 
 ## Deployment 
 
-* `https://discover-regensburg-2.onrender.com/`
+* `https://discover-regensburg-3.onrender.com/`
 
 
 

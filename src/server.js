@@ -2,11 +2,11 @@ import Hapi from "@hapi/hapi";
 import Vision from "@hapi/vision";
 import Handlebars from "handlebars";
 import Joi from "joi";
+import dotenv from "dotenv";
 import Cookie from "@hapi/cookie";
 import Inert from "@hapi/inert";
 import HapiSwagger from "hapi-swagger";
 import jwt from "hapi-auth-jwt2";
-import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { validate } from "./api/jwt-utils.js";
@@ -33,10 +33,19 @@ const swaggerOptions = {
   security: [{ jwt: [] }],
 };
 
-async function init() {
+export async function createServer({ port, host } = {}) {
+  dotenv.config();
+  if (!process.env.COOKIE_NAME || !process.env.COOKIE_PASSWORD) {
+    throw new Error("Missing required env vars: COOKIE_NAME and/or COOKIE_PASSWORD");
+  }
+
+  const envPort = process.env.PORT ? Number(process.env.PORT) : undefined;
+  const resolvedPort = port ?? (Number.isFinite(envPort) ? envPort : 3000);
+  const resolvedHost = host ?? process.env.HOST ?? "0.0.0.0";
+
   const server = Hapi.server({
-    port: 3000,
-    host: "localhost",
+    port: resolvedPort,
+    host: resolvedHost,
   });
 
   server.validator(Joi);
@@ -52,12 +61,6 @@ async function init() {
     },
   ]);
 
-  const result = dotenv.config();
-  if (result.error) {
-    console.log(result.error.message);
-    process.exit(1);
-  }
-
   server.auth.strategy("session", "cookie", {
     cookie: {
       name: process.env.COOKIE_NAME,
@@ -72,7 +75,7 @@ async function init() {
   server.auth.strategy("jwt", "jwt", {
     key: process.env.COOKIE_PASSWORD,
     validate: validate,
-    verifyOptions: { algorithms: ["HS256"] }
+    verifyOptions: { algorithms: ["HS256"] },
   });
 
   server.views({
@@ -86,11 +89,18 @@ async function init() {
     layout: true,
     isCached: false,
   });
-  db.init("mongo");
+
+  await db.init("mongo");
   server.route(webRoutes);
   server.route(apiRoutes);
+  return server;
+}
+
+export async function startServer(options) {
+  const server = await createServer(options);
   await server.start();
   console.log("Server running on %s", server.info.uri);
+  return server;
 }
 
 process.on("unhandledRejection", (err) => {
@@ -98,4 +108,6 @@ process.on("unhandledRejection", (err) => {
   process.exit(1);
 });
 
-init();
+if (process.argv[1] === __filename) {
+  startServer();
+}

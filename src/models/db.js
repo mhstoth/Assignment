@@ -13,12 +13,11 @@ export const db = {
       case "json":
         this.userStore = userJsonStore;
         this.placemarkStore = placemarkJsonStore;
-        break;
+        return Promise.resolve();
       default:
         this.userStore = userMongoStore;
         this.placemarkStore = placemarkMongoStore;
-        connectMongo();
-        break;
+        return connectMongo();
     }
   },
 };

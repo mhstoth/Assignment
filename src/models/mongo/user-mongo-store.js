@@ -19,7 +19,8 @@ export const userMongoStore = {
     if (!user.firstName || !user.lastName || !user.email || !user.password) {
       return null;
     }
-    const newUser = new User(user);
+    const normalizedEmail = user.email.toLowerCase();
+    const newUser = new User({ ...user, email: normalizedEmail, isAdmin: Boolean(user.isAdmin) });
     const userObj = await newUser.save();
     const u = await this.getUserById(userObj._id);
     return u;
@@ -30,11 +31,12 @@ export const userMongoStore = {
       return null;
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return null;
     }
-    const user = await User.findOne({ email: email }).lean();
+    const user = await User.findOne({ email: normalizedEmail }).lean();
     return user;
   },
 
@@ -52,7 +54,8 @@ export const userMongoStore = {
     if (!Mongoose.isValidObjectId(id)) {
       return null;
     }
-    const user = await User.findOneAndUpdate({ _id: id }, updatedUser, { new: true }).lean();
+    const { isAdmin, ...userData } = updatedUser;
+    const user = await User.findOneAndUpdate({ _id: id }, userData, { new: true }).lean();
     return user ?? null;
   },
 

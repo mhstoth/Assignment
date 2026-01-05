@@ -1,6 +1,6 @@
 {
   "name": "discoverRegensburg",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "This is my Placemark discoverRegensburg App",
   "license": "ISC",
   "author": "Moritz Hutzler",
@@ -10,7 +10,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "./node_modules/.bin/eslint . --ext .js",
-    "test": "./node_modules/mocha/bin/_mocha --ui tdd src/test/**/*.js --exit"
+    "test": "./node_modules/mocha/bin/_mocha --ui tdd --import src/test-setup.js src/test/**/*.js --exit"
   },
   "engines": {
     "node": ">=16"
