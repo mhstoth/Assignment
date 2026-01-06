@@ -1,7 +1,18 @@
 import bcrypt from "bcrypt";
 
-// Hash passwords synchronously for seed data
 const hashedPassword = bcrypt.hashSync("1", 10);
+
+const monthsAgo = (months) => {
+  const date = new Date();
+  date.setMonth(date.getMonth() - months);
+  return date;
+};
+
+const daysAgo = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+};
 
 export const seedData = {
   users: {
@@ -30,7 +41,11 @@ export const seedData = {
       latitude: 49.0225,
       longitude: 12.0969,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1666293438241-9f9b3654f118?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1666293438241-9f9b3654f118?w=800",
+        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800"
+      ],
+      createdAt: monthsAgo(6),
     },
     dom: {
       title: "Regensburg Cathedral",
@@ -39,7 +54,12 @@ export const seedData = {
       latitude: 49.0192,
       longitude: 12.0975,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1659100826967-5616a3b1501e?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1659100826967-5616a3b1501e?w=800",
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800",
+        "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800"
+      ],
+      createdAt: monthsAgo(6),
     },
     altesRathaus: {
       title: "Old Town Hall",
@@ -48,7 +68,12 @@ export const seedData = {
       latitude: 49.0199,
       longitude: 12.0957,
       userid: "->users.moritz",
-      img: "https://tourismus.regensburg.de/fileadmin/user_upload/12_Headerbilder/Altes_Rathaus_Tourist_Info____R_RTG.JPG",
+      images: [
+        "https://tourismus.regensburg.de/fileadmin/user_upload/12_Headerbilder/Altes_Rathaus_Tourist_Info____R_RTG.JPG",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800"
+      ],
+      createdAt: monthsAgo(5),
     },
     portaPraetoria: {
       title: "Porta Praetoria",
@@ -57,7 +82,8 @@ export const seedData = {
       latitude: 49.0215,
       longitude: 12.0995,
       userid: "->users.moritz",
-      img: "data:image/jpeg;base64,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",
+      images: [], 
+      createdAt: monthsAgo(5),
     },
     schlossThurnUndTaxis: {
       title: "Thurn and Taxis Palace",
@@ -66,7 +92,12 @@ export const seedData = {
       latitude: 49.0147,
       longitude: 12.0867,
       userid: "->users.moritz",
-      img: "https://lh3.googleusercontent.com/p/AF1QipM4veGo6ICvLTgMqGB_wGXnYMwP0eRuBsGGqS6g=w270-h312-n-k-no",
+      images: [
+        "https://lh3.googleusercontent.com/p/AF1QipM4veGo6ICvLTgMqGB_wGXnYMwP0eRuBsGGqS6g=w270-h312-n-k-no",
+        "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800"
+      ],
+      createdAt: monthsAgo(4),
     },
     keplerHouse: {
       title: "Kepler Memorial House",
@@ -75,7 +106,11 @@ export const seedData = {
       latitude: 49.0206,
       longitude: 12.0951,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+        "https://images.unsplash.com/photo-1571204829887-3b8d69e4094d?w=800"
+      ],
+      createdAt: monthsAgo(4),
     },
     stadtamhof: {
       title: "Stadtamhof",
@@ -84,7 +119,8 @@ export const seedData = {
       latitude: 49.0245,
       longitude: 12.0940,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800",
+      images: [], // Kein Bild - für Donut-Chart Demo
+      createdAt: monthsAgo(3),
     },
     // Restaurants
     wurstkuchl: {
@@ -94,7 +130,13 @@ export const seedData = {
       latitude: 49.0224,
       longitude: 12.0965,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1724078770616-2f8e19d75761?q=80&w=872&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",    },
+      images: [
+        "https://images.unsplash.com/photo-1724078770616-2f8e19d75761?q=80&w=872&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800"
+      ],
+      createdAt: monthsAgo(3),
+    },
     leererBeutel: {
       title: "Leerer Beutel",
       category: "Restaurants",
@@ -102,7 +144,12 @@ export const seedData = {
       latitude: 49.0190,
       longitude: 12.1020,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800",
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800"
+      ],
+      createdAt: monthsAgo(3),
     },
     dampfnudel: {
       title: "Dampfnudel Uli",
@@ -111,7 +158,12 @@ export const seedData = {
       latitude: 49.0185,
       longitude: 12.0945,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+        "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800"
+      ],
+      createdAt: monthsAgo(2),
     },
     storstad: {
       title: "Storstad",
@@ -120,7 +172,8 @@ export const seedData = {
       latitude: 49.0170,
       longitude: 12.0980,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+      images: [],
+      createdAt: monthsAgo(2),
     },
     orphee: {
       title: "Orphée",
@@ -129,7 +182,11 @@ export const seedData = {
       latitude: 49.0195,
       longitude: 12.0930,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800",
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800"
+      ],
+      createdAt: monthsAgo(2),
     },
     // Bars
     kneitinger: {
@@ -139,7 +196,12 @@ export const seedData = {
       latitude: 49.0180,
       longitude: 12.0920,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800",
+        "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800",
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800"
+      ],
+      createdAt: monthsAgo(1),
     },
     spitalgarten: {
       title: "Spitalgarten",
@@ -148,7 +210,12 @@ export const seedData = {
       latitude: 49.0230,
       longitude: 12.0945,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=800",
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800",
+        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800"
+      ],
+      createdAt: monthsAgo(1),
     },
     alteLinde: {
       title: "Alte Linde",
@@ -157,7 +224,8 @@ export const seedData = {
       latitude: 49.0188,
       longitude: 12.0960,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800",
+      images: [], 
+      createdAt: daysAgo(20),
     },
     hemingways: {
       title: "Hemingway's",
@@ -166,7 +234,12 @@ export const seedData = {
       latitude: 49.0178,
       longitude: 12.0935,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800",
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800"
+      ],
+      createdAt: daysAgo(15),
     },
     // Clubs
     scala: {
@@ -176,7 +249,12 @@ export const seedData = {
       latitude: 49.0150,
       longitude: 12.0950,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800",
+        "https://images.unsplash.com/photo-1571204829887-3b8d69e4094d?w=800"
+      ],
+      createdAt: daysAgo(10),
     },
     lux: {
       title: "LUX - Young Church",
@@ -185,7 +263,12 @@ export const seedData = {
       latitude: 49.0172,
       longitude: 12.0890,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800",
+        "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+        "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800"
+      ],
+      createdAt: daysAgo(7),
     },
     alteMaelzerei: {
       title: "Alte Mälzerei",
@@ -194,7 +277,8 @@ export const seedData = {
       latitude: 49.0140,
       longitude: 12.1050,
       userid: "->users.moritz",
-      img: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800",
+      images: [],
+      createdAt: daysAgo(3),
     },
     banane: {
       title: "Banane",
@@ -203,7 +287,12 @@ export const seedData = {
       latitude: 49.0165,
       longitude: 12.0925,
       userid: "->users.jannis",
-      img: "https://images.unsplash.com/photo-1571204829887-3b8d69e4094d?w=800",
+      images: [
+        "https://images.unsplash.com/photo-1571204829887-3b8d69e4094d?w=800",
+        "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800",
+        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800"
+      ],
+      createdAt: daysAgo(1),
     },
   },
-}
+};

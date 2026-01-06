@@ -1,34 +1,34 @@
 <script lang="ts">
-	import { placemarkApi, type Placemark, getToken, getLastCategory, setLastCategory } from '$lib/api';
-	import { requireAuth, isAuthenticated, checkAdminStatus, clearUser, logout } from '$lib/auth';
-	import { userApi } from '$lib/api';
-	import { goto } from '$app/navigation';
+	import { placemarkApi, type Placemark, getLastCategory, setLastCategory, setToken, getToken } from '$lib/api';
 	import { onMount } from 'svelte';
 	import LeafletMap from '$lib/components/LeafletMap.svelte';
+	import ImageGallery from '$lib/components/ImageGallery.svelte';
+	import type { PageData } from './$types';
 
-	let placemarks = $state<Placemark[]>([]);
-	let loading = $state(true);
+	let { data }: { data: PageData } = $props();
+
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+	let loading = $state(false);
 	let error = $state('');
-	let isAdmin = $state(false);
 
-	// Collapsible sections state
 	let mapExpanded = $state(true);
 	let formExpanded = $state(true);
 	let listExpanded = $state(true);
+	let selectedCategory = $state<string | null>(null);
 
-	// Map reference
 	let map: LeafletMap;
 	let mapReady = $state(false);
 
-	// Form fields
 	let title = $state('');
 	let description = $state('');
 	let category = $state(getLastCategory());
 	let customCategory = $state('');
 	let latitude = $state('');
 	let longitude = $state('');
-	let imageFile = $state<File | null>(null);
+	let imageFiles = $state<File[]>([]);
+	let imagePreviews = $state<string[]>([]);
 	let editingId = $state<string | null>(null);
+	let submitting = $state(false);
 
 	const defaultCategories = ['Sightseeing', 'Restaurants', 'Bars', 'Clubs'];
 	const allCategories = $derived.by(() => {
@@ -38,7 +38,11 @@
 
 	const groupedPlacemarks = $derived.by(() => {
 		const groups: Record<string, Placemark[]> = {};
-		placemarks.forEach((p) => {
+		const filteredPlacemarks = selectedCategory
+			? placemarks.filter((p) => p.category === selectedCategory)
+			: placemarks;
+		
+		filteredPlacemarks.forEach((p) => {
 			if (!groups[p.category]) {
 				groups[p.category] = [];
 			}
@@ -47,33 +51,17 @@
 		return Object.entries(groups).map(([category, items]) => ({ category, items }));
 	});
 
-	onMount(() => {
-		if (!isAuthenticated()) {
-			requireAuth();
-			return;
-		}
-		loadPlacemarks();
-		checkAdmin();
+	const filteredPlacemarksCount = $derived.by(() => {
+		return selectedCategory
+			? placemarks.filter((p) => p.category === selectedCategory).length
+			: placemarks.length;
 	});
 
-	async function checkAdmin() {
-		try {
-			const token = getToken();
-			if (!token) return;
-			
-			const payload = JSON.parse(atob(token.split('.')[1]));
-			if (payload.id) {
-				const user = await userApi.findOne(payload.id);
-				isAdmin = user.isAdmin === true;
-			}
-		} catch (err) {
-			console.error('Error checking admin status:', err);
+	onMount(() => {
+		if (data.token && !getToken()) {
+			setToken(data.token);
 		}
-	}
-
-	function handleLogout() {
-		goto('/logout', { keepFocus: false, preserveScroll: false });
-	}
+	});
 
 	async function loadPlacemarks() {
 		try {
@@ -94,8 +82,40 @@
 		customCategory = '';
 		latitude = '';
 		longitude = '';
-		imageFile = null;
+		imageFiles = [];
+		imagePreviews = [];
 		editingId = null;
+	}
+
+	async function handleImageSelect(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const newFiles = Array.from(target.files || []);
+		
+		// Füge neue Dateien zu den bereits vorhandenen hinzu
+		imageFiles = [...imageFiles, ...newFiles];
+		
+		// Erstelle Vorschau-URLs für die neuen Bilder
+		const newPreviews: string[] = [];
+		for (const file of newFiles) {
+			const preview = await new Promise<string>((resolve) => {
+				const reader = new FileReader();
+				reader.onload = (event) => {
+					resolve(event.target?.result as string);
+				};
+				reader.readAsDataURL(file);
+			});
+			newPreviews.push(preview);
+		}
+		// Füge neue Vorschauen zu den bereits vorhandenen hinzu
+		imagePreviews = [...imagePreviews, ...newPreviews];
+		
+		// Setze das File-Input zurück, damit weitere Dateien ausgewählt werden können
+		target.value = '';
+	}
+
+	function removeImage(index: number) {
+		imageFiles = imageFiles.filter((_, i) => i !== index);
+		imagePreviews = imagePreviews.filter((_, i) => i !== index);
 	}
 
 	function startEdit(placemark: Placemark) {
@@ -109,7 +129,9 @@
 	}
 
 	async function handleSubmit() {
+		if (submitting) return;
 		try {
+			submitting = true;
 			error = '';
 			const finalCategory = customCategory.trim() || category;
 			const placemarkData = {
@@ -122,13 +144,13 @@
 
 			if (editingId) {
 				await placemarkApi.update(editingId, placemarkData);
-				if (imageFile) {
-					await placemarkApi.uploadImage(editingId, imageFile);
+				if (imageFiles.length > 0) {
+					await placemarkApi.uploadImages(editingId, imageFiles);
 				}
 			} else {
 				const newPlacemark = await placemarkApi.create(placemarkData);
-				if (imageFile && newPlacemark._id) {
-					await placemarkApi.uploadImage(newPlacemark._id, imageFile);
+				if (imageFiles.length > 0 && newPlacemark._id) {
+					await placemarkApi.uploadImages(newPlacemark._id, imageFiles);
 				}
 			}
 
@@ -137,6 +159,8 @@
 			await loadPlacemarks();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Error saving placemark';
+		} finally {
+			submitting = false;
 		}
 	}
 
@@ -150,10 +174,21 @@
 		}
 	}
 
-	// Map functions
+	async function handleDeleteImage(placemarkId: string, imageUrl: string) {
+		try {
+			await placemarkApi.deleteImage(placemarkId, imageUrl);
+			await loadPlacemarks();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Error deleting image';
+		}
+	}
+
 	function createPopupContent(placemark: Placemark): string {
-		const imgHtml = placemark.img
-			? `<img src="${placemark.img}" alt="${placemark.title}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" />`
+		const firstImage = placemark.images && placemark.images.length > 0 
+			? placemark.images[0]
+			: null;
+		const imgHtml = firstImage
+			? `<img src="${firstImage}" alt="${placemark.title}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" />`
 			: `<img src="/favicon.png" alt="Placeholder" style="width: 40px; height: 40px; object-fit: contain; margin: 0 auto 8px; display: block; background: #f5f5f7; padding: 4px; border-radius: 4px;" />`;
 
 		return `
@@ -199,19 +234,7 @@
 
 <div class="dashboard-container">
 	<div class="dashboard-header">
-		<div class="dashboard-header-left">
-			<img src="/favicon.png" alt="discoverRegensburg logo" class="dashboard-logo" />
-			<div class="dashboard-title-wrapper">
-				<h1 class="dashboard-title">Dashboard</h1>
-			</div>
-		</div>
-		<nav class="dashboard-menu">
-			{#if isAdmin}
-				<a href="/admin" class="button">Admin</a>
-			{/if}
-			<a href="/map" class="button">Full Map</a>
-			<button class="button" onclick={handleLogout}>Logout</button>
-		</nav>
+		<h1 class="dashboard-title">Dashboard</h1>
 	</div>
 
 	{#if error}
@@ -276,17 +299,35 @@
 							</div>
 
 							<div class="form-group">
-								<label for="image" class="form-label">Image</label>
+								<label for="images" class="form-label">
+									Images {imageFiles.length > 0 ? `(${imageFiles.length} selected)` : ''}
+								</label>
 								<input
-									id="image"
+									id="images"
 									class="form-input form-file"
 									type="file"
 									accept="image/*"
-									onchange={(e) => {
-										const target = e.target as HTMLInputElement;
-										imageFile = target.files?.[0] || null;
-									}}
+									multiple
+									onchange={handleImageSelect}
 								/>
+								{#if imagePreviews.length > 0}
+									<div class="image-previews">
+										{#each imagePreviews as preview, index}
+											<div class="image-preview-item">
+												<img src={preview} alt="Preview {index + 1}" class="preview-image" />
+												<button
+													type="button"
+													class="remove-image-button"
+													onclick={() => removeImage(index)}
+													aria-label="Remove image"
+												>
+													<i class="fas fa-times"></i>
+												</button>
+												<div class="preview-filename">{imageFiles[index]?.name || ''}</div>
+											</div>
+										{/each}
+									</div>
+								{/if}
 							</div>
 
 							<div class="form-group">
@@ -299,6 +340,9 @@
 													<option value={cat}>{cat}</option>
 												{/each}
 											</select>
+											<svg class="select-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+											</svg>
 										</div>
 									</div>
 									<div class="form-group form-group-half">
@@ -340,8 +384,13 @@
 							</div>
 
 							<div class="form-actions">
-								<button class="button" type="submit">
-									{editingId ? 'Update Placemark' : 'Add Placemark'}
+								<button class="button" type="submit" disabled={submitting}>
+									{#if submitting}
+										<span class="spinner-small"></span>
+										{editingId ? 'Updating...' : 'Adding...'}
+									{:else}
+										{editingId ? 'Update Placemark' : 'Add Placemark'}
+									{/if}
 								</button>
 								{#if editingId}
 									<button class="button secondary-button" type="button" onclick={resetForm}>Cancel</button>
@@ -363,7 +412,7 @@
 				>
 					<span class="collapsible-icon">{listExpanded ? '▼' : '▶'}</span>
 					<span class="collapsible-title">Your Placemarks</span>
-					<span class="collapsible-info">{placemarks.length} items</span>
+					<span class="collapsible-info">{filteredPlacemarksCount} items</span>
 				</button>
 				{#if listExpanded}
 					<div class="collapsible-content">
@@ -372,6 +421,37 @@
 						{:else if groupedPlacemarks.length === 0}
 							<p class="empty-text">No placemarks available. Add your first one!</p>
 						{:else}
+							<!-- Filter Section -->
+							<div class="filter-section">
+								<div class="filter-label">
+									<i class="fas fa-filter" style="color: #ff6b35; margin-right: 0.5rem;"></i>
+									Filter by Category:
+								</div>
+								<div class="filter-buttons">
+									<button
+										class="filter-button"
+										class:active={selectedCategory === null}
+										onclick={() => selectedCategory = null}
+									>
+										<svg class="filter-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M2 2h12M2 8h12M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+										</svg>
+										All
+									</button>
+									{#each allCategories as cat}
+										<button
+											class="filter-button"
+											class:active={selectedCategory === cat}
+											onclick={() => selectedCategory = cat}
+										>
+											<svg class="filter-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+											</svg>
+											{cat}
+										</button>
+									{/each}
+								</div>
+							</div>
 							<div class="placemarks-list">
 								{#each groupedPlacemarks as group}
 									<div class="category-group">
@@ -379,11 +459,10 @@
 										{#each group.items as placemark}
 											<article class="placemark-card">
 												<div class="placemark-image">
-													{#if placemark.img}
-														<img src={placemark.img} alt={placemark.title} />
-													{:else}
-														<img src="/favicon.png" alt="Placeholder" class="placeholder-image" />
-													{/if}
+													<ImageGallery 
+														images={placemark.images || []} 
+														onDelete={placemark._id ? (url) => handleDeleteImage(placemark._id, url) : undefined}
+													/>
 												</div>
 												<div class="placemark-content">
 													<div class="placemark-header">
@@ -548,6 +627,65 @@
 		margin-top: 1rem;
 	}
 
+	.filter-section {
+		margin-bottom: 1.5rem;
+		padding-bottom: 1rem;
+		border-bottom: 1px solid #e5e5e7;
+	}
+
+	.filter-label {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #1d1d1f;
+		margin-bottom: 0.75rem;
+		display: flex;
+		align-items: center;
+	}
+
+	.filter-buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.filter-button {
+		padding: 0.5rem 1rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #86868b;
+		background: #f5f5f7;
+		border: 1px solid #e5e5e7;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.filter-icon {
+		flex-shrink: 0;
+		width: 16px;
+		height: 16px;
+		transition: all 0.2s ease;
+	}
+
+	.filter-button:hover {
+		background: #e5e5e7;
+		border-color: #d2d2d7;
+		color: #1d1d1f;
+	}
+
+	.filter-button.active {
+		background: #ff6b35;
+		color: white;
+		border-color: #ff6b35;
+	}
+
+	.filter-button.active .filter-icon {
+		stroke: white;
+	}
+
 	.placemarks-list {
 		display: flex;
 		flex-direction: column;
@@ -571,12 +709,14 @@
 
 	.placemark-card {
 		display: flex;
+		flex-direction: column;
 		gap: 1rem;
-		padding: 1rem;
+		padding: 0;
 		background: #fafafa;
 		border-radius: 5px;
 		border: 1px solid #e5e5e7;
 		transition: all 0.2s ease;
+		overflow: hidden;
 	}
 
 	.placemark-card:hover {
@@ -585,23 +725,8 @@
 	}
 
 	.placemark-image {
-		flex-shrink: 0;
-		width: 80px;
-		height: 80px;
-		border-radius: 5px;
-		overflow: hidden;
-	}
-
-	.placemark-image img {
 		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.placemark-image .placeholder-image {
-		object-fit: contain;
-		padding: 1rem;
-		background: #f5f5f7;
+		flex-shrink: 0;
 	}
 
 	.placemark-content {
@@ -609,6 +734,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		padding: 1rem;
 	}
 
 	.placemark-header {
@@ -672,6 +798,179 @@
 		margin: 0;
 	}
 
+	/* Image Preview Styles */
+	.image-previews {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 1rem;
+		margin-top: 1rem;
+		padding: 0.5rem 0;
+	}
+
+	.image-preview-item {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		background: #ffffff;
+		border-radius: 12px;
+		padding: 0.75rem;
+		border: 2px solid #e5e5e7;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+		transition: all 0.2s ease;
+		overflow: hidden;
+	}
+
+	.image-preview-item:hover {
+		border-color: #ff6b35;
+		box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+		transform: translateY(-2px);
+	}
+
+	.preview-image {
+		width: 100%;
+		height: 140px;
+		object-fit: cover;
+		border-radius: 8px;
+		background: #f5f5f7;
+		border: 1px solid #e5e5e7;
+		transition: transform 0.2s ease;
+	}
+
+	.image-preview-item:hover .preview-image {
+		transform: scale(1.02);
+	}
+
+	.remove-image-button {
+		position: absolute;
+		top: 0.875rem;
+		right: 0.875rem;
+		background: rgba(197, 48, 48, 0.95);
+		color: white;
+		border: none;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.875rem;
+		transition: all 0.2s ease;
+		z-index: 2;
+		box-shadow: 0 2px 6px rgba(197, 48, 48, 0.3);
+		opacity: 0.9;
+	}
+
+	.image-preview-item:hover .remove-image-button {
+		opacity: 1;
+	}
+
+	.remove-image-button:hover {
+		background: rgba(197, 48, 48, 1);
+		transform: scale(1.1);
+		box-shadow: 0 3px 8px rgba(197, 48, 48, 0.4);
+	}
+
+	.remove-image-button:active {
+		transform: scale(0.95);
+	}
+
+	.preview-filename {
+		font-size: 0.75rem;
+		color: #1d1d1f;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
+		padding: 0.25rem 0.5rem;
+		background: #f5f5f7;
+		border-radius: 6px;
+		font-weight: 500;
+		text-align: center;
+		line-height: 1.4;
+	}
+
+	/* File Input Styling */
+	.form-file {
+		padding: 0.75rem 1rem;
+		cursor: pointer;
+		background: #ffffff;
+		border: 2px dashed #d2d2d7;
+		border-radius: 8px;
+		transition: all 0.2s ease;
+		font-size: 0.9375rem;
+	}
+
+	.form-file:hover {
+		border-color: #ff6b35;
+		background: #fff5f2;
+	}
+
+	.form-file:focus {
+		border-color: #ff6b35;
+		background: #fff5f2;
+		box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+	}
+
+	.form-file::file-selector-button {
+		padding: 0.5rem 1rem;
+		margin-right: 1rem;
+		border: 1px solid #ff6b35;
+		border-radius: 6px;
+		background: #ff6b35;
+		color: white;
+		font-weight: 500;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.form-file::file-selector-button:hover {
+		background: #e55a2b;
+		border-color: #e55a2b;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+	}
+
+	.form-group:has(.form-file) .form-label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 600;
+		color: #1d1d1f;
+	}
+
+	/* Select Icon Styling */
+	.select-wrapper {
+		position: relative;
+	}
+
+	.select-wrapper::after {
+		display: none;
+	}
+
+	.select-icon {
+		position: absolute;
+		right: 1rem;
+		top: 50%;
+		transform: translateY(-50%);
+		pointer-events: none;
+		color: #1d1d1f;
+		width: 16px;
+		height: 16px;
+		transition: all 0.2s ease;
+		z-index: 1;
+	}
+
+	.select-wrapper:hover .select-icon,
+	.form-select:focus + .select-icon {
+		color: #ff6b35;
+	}
+
+	.form-select:focus + .select-icon {
+		transform: translateY(-50%) rotate(180deg);
+	}
+
 	@media (max-width: 1024px) {
 		.dashboard-content {
 			grid-template-columns: 1fr;
@@ -691,13 +990,63 @@
 			padding: 0 1rem 1rem 1rem;
 		}
 
-		.placemark-card {
-			flex-direction: column;
+		.filter-buttons {
+			gap: 0.375rem;
 		}
 
-		.placemark-image {
-			width: 100%;
-			height: 200px;
+		.filter-button {
+			padding: 0.375rem 0.75rem;
+			font-size: 0.8125rem;
 		}
+
+		.image-previews {
+			grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+			gap: 0.75rem;
+		}
+
+		.preview-image {
+			height: 100px;
+		}
+
+		.remove-image-button {
+			width: 28px;
+			height: 28px;
+			font-size: 0.75rem;
+		}
+
+		.preview-filename {
+			font-size: 0.6875rem;
+			padding: 0.2rem 0.4rem;
+		}
+
+		.form-file::file-selector-button {
+			padding: 0.4rem 0.75rem;
+			font-size: 0.8125rem;
+			margin-right: 0.75rem;
+		}
+	}
+
+	/* Spinner for button loading state */
+	.spinner-small {
+		display: inline-block;
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-top-color: #ffffff;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+		margin-right: 0.5rem;
+		vertical-align: middle;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.button:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
 	}
 </style>

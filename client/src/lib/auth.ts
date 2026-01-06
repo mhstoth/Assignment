@@ -1,11 +1,24 @@
 import { getToken, getCachedUser, setCachedUser, clearCachedUser, removeToken } from './api';
 import { goto } from '$app/navigation';
 import { userApi, type User } from './api';
+import { authStore } from './stores/auth';
+import { get } from 'svelte/store';
 
 let currentUser: User | null = null;
 
+/**
+ * Prüft ob der Benutzer authentifiziert ist
+ * Synchronisiert mit authStore für Konsistenz
+ * @returns true wenn authentifiziert, false sonst
+ */
 export function isAuthenticated(): boolean {
-	return getToken() !== null;
+	// Verwende authStore als Single Source of Truth
+	const state = authStore.getSnapshot();
+	if (state.isLoggedIn) {
+		// Doppelte Validierung: Prüfe auch Token direkt
+		return getToken() !== null;
+	}
+	return false;
 }
 
 export function requireAuth(): void {
@@ -47,7 +60,19 @@ export async function getCurrentUser(): Promise<User | null> {
 	return null;
 }
 
+/**
+ * Prüft ob der Benutzer Admin-Rechte hat
+ * Synchronisiert mit authStore für Konsistenz
+ * @returns true wenn Admin, false sonst
+ */
 export function isAdmin(): boolean {
+	// Verwende authStore als primäre Quelle
+	const state = authStore.getSnapshot();
+	if (state.isAdmin) {
+		return true;
+	}
+	
+	// Fallback: Prüfe auch cached User
 	if (currentUser?.isAdmin === true) return true;
 	const cachedUser = getCachedUser();
 	return cachedUser?.isAdmin === true;
@@ -63,9 +88,13 @@ export function clearUser(): void {
 	clearCachedUser();
 }
 
+/**
+ * Loggt den Benutzer aus
+ * Bereinigt alle Auth-Daten und navigiert zur Startseite
+ */
 export function logout(): void {
 	clearUser();
-	removeToken();
+	removeToken(); // Entfernt Token und aktualisiert authStore
 	goto('/');
 }
 

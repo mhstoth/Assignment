@@ -19,17 +19,15 @@
 		const leaflet = await import('leaflet');
 		L = leaflet.default;
 
-		// Fix for default marker icons in Leaflet with bundlers
-		const DefaultIcon = L.icon({
-			iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-			iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+		const OrangeIcon = L.icon({
+			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
 			shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 			iconSize: [25, 41],
 			iconAnchor: [12, 41],
 			popupAnchor: [1, -34],
 			shadowSize: [41, 41]
 		});
-		L.Marker.prototype.options.icon = DefaultIcon;
+		L.Marker.prototype.options.icon = OrangeIcon;
 
 		const baseLayers = {
 			'Street Map': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

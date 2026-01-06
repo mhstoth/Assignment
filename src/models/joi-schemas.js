@@ -47,7 +47,7 @@ export const PlacemarkSpec = Joi.object()
     longitude: Joi.number().min(-180).max(180).example(12.0969).description("the longitude").required(),
     category: Joi.string().example("Sightseeing").description("the category").required(),
     description: Joi.string().example("Old bridge").description("the description").required(),
-    img: Joi.string().example("url").description("image url").optional(),
+    images: Joi.array().items(Joi.string()).example(["url1", "url2"]).description("image urls").optional(),
     userid: IdSpec,
     _id: IdSpec,
     __v: Joi.number(),
@@ -61,7 +61,7 @@ export const PlacemarkSpecPlus = Joi.object()
     longitude: Joi.number().min(-180).max(180).example(12.0969).description("the longitude").required(),
     category: Joi.string().example("Sightseeing").description("the category").required(),
     description: Joi.string().example("Old bridge").description("the description").required(),
-    img: Joi.string().example("url").description("image url").optional(),
+    images: Joi.array().items(Joi.string()).example(["url1", "url2"]).description("image urls").optional(),
   })
   .label("PlacemarkDetailsPlus");
 

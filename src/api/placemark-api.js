@@ -144,8 +144,10 @@ export const placemarkApi = {
           if (placemark.userid?.toString() !== userId) {
             return Boom.forbidden("You can only delete your own placemarks");
           }
-          if (placemark.img) {
-            await imageStore.deleteImage(placemark.img);
+          if (placemark.images && placemark.images.length > 0) {
+            await Promise.all(
+              placemark.images.map(img => imageStore.deleteImage(img).catch(err => console.log("Image delete failed:", err)))
+            );
           }
           await db.placemarkStore.deletePlacemarkById(placemark._id);
           return h.response().code(204);
@@ -174,12 +176,10 @@ export const placemarkApi = {
 
         await Promise.all(
           userPlacemarks.map(async placemark => {
-            if (placemark.img) {
-              try {
-                await imageStore.deleteImage(placemark.img);
-              } catch (err) {
-                console.log("Image delete failed:", err);
-              }
+            if (placemark.images && placemark.images.length > 0) {
+              await Promise.all(
+                placemark.images.map(img => imageStore.deleteImage(img).catch(err => console.log("Image delete failed:", err)))
+              );
             }
             await db.placemarkStore.deletePlacemarkById(placemark._id);
           })
@@ -204,12 +204,10 @@ export const placemarkApi = {
 
         await Promise.all(
           placemarks.map(async placemark => {
-            if (placemark.img) {
-              try {
-                await imageStore.deleteImage(placemark.img);
-              } catch (err) {
-                console.log("Image delete failed:", err);
-              }
+            if (placemark.images && placemark.images.length > 0) {
+              await Promise.all(
+                placemark.images.map(img => imageStore.deleteImage(img).catch(err => console.log("Image delete failed:", err)))
+              );
             }
           })
         );
@@ -226,7 +224,7 @@ export const placemarkApi = {
     notes: "Deletes all placemarks from the system"
   },
 
-  uploadImage: {
+  uploadImages: {
     auth: "jwt",
     handler: async function (request, h) {
       try {
@@ -241,17 +239,35 @@ export const placemarkApi = {
         if (placemark.userid?.toString() !== userId) {
           return Boom.forbidden("You can only upload images to your own placemarks");
         }
-        const file = request.payload.imagefile;
-        if (file && Object.keys(file).length > 0) {
-          const url = await imageStore.uploadImage(request.payload.imagefile);
-          placemark.img = url;
-          await db.placemarkStore.updatePlacemarkById(placemark._id, placemark);
-          return h.response(placemark).code(201);
+        
+        const files = Array.isArray(request.payload.imagefiles) 
+          ? request.payload.imagefiles 
+          : (request.payload.imagefiles ? [request.payload.imagefiles] : []);
+        
+        if (files.length === 0) {
+          return Boom.badRequest("No images provided");
         }
-        return Boom.badRequest("No image provided");
+        
+        const urls = [];
+        for (const file of files) {
+          if (file && Object.keys(file).length > 0) {
+            // Extract buffer from Hapi file object
+            const buffer = file._data || file;
+            const url = await imageStore.uploadImage(buffer);
+            urls.push(url);
+          }
+        }
+        
+        if (!placemark.images) {
+          placemark.images = [];
+        }
+        placemark.images = [...placemark.images, ...urls];
+        
+        await db.placemarkStore.updatePlacemarkById(placemark._id, placemark);
+        return h.response(placemark).code(201);
       } catch (err) {
         console.error("Upload failed:", err);
-        return Boom.badImplementation("error uploading image");
+        return Boom.badImplementation("error uploading images");
       }
     },
     payload: {
@@ -261,15 +277,65 @@ export const placemarkApi = {
       parse: true,
     },
     tags: ["api"],
-    description: "Upload an image to a placemark",
-    notes: "Uploads an image file to Cloudinary and links it to the placemark",
+    description: "Upload multiple images to a placemark",
+    notes: "Uploads multiple image files to Cloudinary and adds them to the placemark's images array",
     plugins: {
       "hapi-swagger": { payloadType: "form" },
     },
     validate: {
       params: { id: IdSpec },
       payload: Joi.object({
-        imagefile: Joi.any().meta({ swaggerType: "file" }).description("file to upload").required(),
+        imagefiles: Joi.alternatives().try(
+          Joi.array().items(Joi.any().meta({ swaggerType: "file" })),
+          Joi.any().meta({ swaggerType: "file" })
+        ).description("files to upload").required(),
+      }),
+      failAction: (request, h, err) => { throw err; }
+    },
+  },
+
+  deleteImage: {
+    auth: "jwt",
+    handler: async function (request, h) {
+      try {
+        const userId = request.auth.credentials?._id?.toString();
+        if (!userId) {
+          return Boom.unauthorized("User not authenticated");
+        }
+        const placemark = await db.placemarkStore.getPlacemarkById(request.params.id);
+        if (!placemark) {
+          return Boom.notFound("Placemark not found");
+        }
+        if (placemark.userid?.toString() !== userId) {
+          return Boom.forbidden("You can only delete images from your own placemarks");
+        }
+        
+        const imageUrl = decodeURIComponent(request.params.imageUrl);
+        
+        if (!placemark.images || !placemark.images.includes(imageUrl)) {
+          return Boom.notFound("Image not found in placemark");
+        }
+        
+        placemark.images = placemark.images.filter(img => img !== imageUrl);
+        
+        await imageStore.deleteImage(imageUrl).catch(err => {
+          console.log("Cloudinary delete failed:", err);
+        });
+        
+        await db.placemarkStore.updatePlacemarkById(placemark._id, placemark);
+        return h.response(placemark).code(200);
+      } catch (err) {
+        console.error("Delete image failed:", err);
+        return Boom.badImplementation("error deleting image");
+      }
+    },
+    tags: ["api"],
+    description: "Delete a specific image from a placemark",
+    notes: "Removes an image URL from the placemark's images array and deletes it from Cloudinary",
+    validate: {
+      params: Joi.object({
+        id: IdSpec,
+        imageUrl: Joi.string().required(),
       }),
       failAction: (request, h, err) => { throw err; }
     },

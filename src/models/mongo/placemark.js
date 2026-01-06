@@ -7,7 +7,7 @@ const placemarkSchema = new Schema({
   userid: String,
   category: String,
   description: String,
-  img: String,
+  images: [String],
   latitude: {
     type: Number,
     min: -90,
@@ -26,8 +26,11 @@ const placemarkSchema = new Schema({
     validate: {
       validator: Number.isFinite,
       message: "Longitude must be a finite number"
-
     },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

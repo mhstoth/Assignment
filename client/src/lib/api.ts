@@ -1,4 +1,5 @@
 import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { authStore } from './stores/auth';
 
 const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'current_user';
@@ -32,21 +33,83 @@ export interface Placemark {
 	longitude: number;
 	category: string;
 	description: string;
-	img?: string;
+	images?: string[];
 	userid?: string;
+	createdAt?: string;
 	__v?: number;
 }
 
+/**
+ * Validiert einen JWT Token
+ * @param token - Der JWT Token String
+ * @returns true wenn Token gültig ist, false sonst
+ */
+function isValidToken(token: string): boolean {
+	try {
+		const parts = token.split('.');
+		if (parts.length !== 3) {
+			return false;
+		}
+
+		const payload = JSON.parse(atob(parts[1]));
+		
+		// Prüfe Ablaufzeit
+		if (payload.exp && payload.exp * 1000 < Date.now()) {
+			return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Gibt den aktuellen JWT Token zurück (falls vorhanden und gültig)
+ * Entfernt automatisch abgelaufene oder ungültige Tokens
+ * @returns Der gültige Token oder null
+ */
 export function getToken(): string | null {
 	if (typeof window !== 'undefined') {
-		return localStorage.getItem(TOKEN_KEY);
+		const token = localStorage.getItem(TOKEN_KEY);
+		if (token) {
+			if (isValidToken(token)) {
+				return token;
+			} else {
+				// Token ist ungültig oder abgelaufen - entferne ihn
+				localStorage.removeItem(TOKEN_KEY);
+				localStorage.removeItem(USER_KEY);
+				// Synchronisiere mit authStore
+				authStore.logout();
+				return null;
+			}
+		}
 	}
 	return null;
 }
 
+/**
+ * Speichert einen JWT Token im Local Storage und aktualisiert den authStore
+ * @param token - Der JWT Token String
+ * @throws Error wenn Token ungültig ist
+ */
 export function setToken(token: string): void {
 	if (typeof window !== 'undefined') {
+		// Validiere Token bevor er gespeichert wird
+		if (!isValidToken(token)) {
+			throw new Error('Invalid or expired token');
+		}
+
 		localStorage.setItem(TOKEN_KEY, token);
+		
+		try {
+			const parts = token.split('.');
+			const payload = JSON.parse(atob(parts[1]));
+			authStore.login(payload.isAdmin === true);
+		} catch (err) {
+			console.error('[API] Failed to parse token payload:', err);
+			authStore.login(false);
+		}
 	}
 }
 
@@ -103,9 +166,45 @@ export function setAdminTab(tab: 'users' | 'analytics'): void {
 	}
 }
 
+/**
+ * Entfernt den Token aus Local Storage und Session Storage
+ * Aktualisiert den authStore
+ * Wird beim Logout verwendet
+ */
+/**
+ * Entfernt ALLE Auth-Daten aus Local Storage und Session Storage
+ * Wird beim vollständigen Logout verwendet
+ */
+export function clearAllAuthData(): void {
+	if (typeof window !== 'undefined') {
+		// Local Storage: Entferne alle Auth-relevanten Daten
+		localStorage.removeItem(TOKEN_KEY);
+		localStorage.removeItem(USER_KEY);
+		
+		// Session Storage: Entferne alle Auth-relevanten Daten
+		try {
+			sessionStorage.removeItem(TOKEN_KEY);
+			sessionStorage.removeItem(USER_KEY);
+			// Optional: Session Storage komplett leeren
+			sessionStorage.clear();
+		} catch (err) {
+			console.warn('[API] Could not clear sessionStorage:', err);
+		}
+	}
+}
+
+/**
+ * Entfernt den Token aus Local Storage und Session Storage
+ * Aktualisiert den authStore
+ * Wird beim Logout verwendet
+ */
 export function removeToken(): void {
 	if (typeof window !== 'undefined') {
-		localStorage.removeItem(TOKEN_KEY);
+		// Entferne alle Auth-Daten
+		clearAllAuthData();
+		
+		// Aktualisiere authStore (dies ruft auch clearAuthData() auf)
+		authStore.logout();
 	}
 }
 
@@ -140,7 +239,6 @@ async function apiRequest<T>(
 	return response.json();
 }
 
-// User API
 export const userApi = {
 	async authenticate(credentials: UserCredentials): Promise<AuthResponse> {
 		try {
@@ -257,17 +355,20 @@ export const placemarkApi = {
 		});
 	},
 
-	async uploadImage(id: string, file: File): Promise<Placemark> {
+	async uploadImages(id: string, files: File[]): Promise<Placemark> {
 		const token = getToken();
 		const formData = new FormData();
-		formData.append('imagefile', file);
+		
+		files.forEach((file) => {
+			formData.append('imagefiles', file);
+		});
 
 		const headers: Record<string, string> = {};
 		if (token) {
 			headers['Authorization'] = `Bearer ${token}`;
 		}
 
-		const response = await fetch(`${PUBLIC_API_BASE_URL}/api/placemarks/${id}/uploadimage`, {
+		const response = await fetch(`${PUBLIC_API_BASE_URL}/api/placemarks/${id}/uploadimages`, {
 			method: 'POST',
 			headers,
 			body: formData,
@@ -279,6 +380,13 @@ export const placemarkApi = {
 		}
 
 		return response.json();
+	},
+
+	async deleteImage(id: string, imageUrl: string): Promise<Placemark> {
+		const encodedUrl = encodeURIComponent(imageUrl);
+		return apiRequest<Placemark>(`/api/placemarks/${id}/images/${encodedUrl}`, {
+			method: 'DELETE',
+		});
 	},
 };
 

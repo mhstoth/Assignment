@@ -22,6 +22,9 @@ export const userApi = {
         if (!user) {
           return Boom.unauthorized("User not found");
         }
+        if (!user.password) {
+          return Boom.unauthorized("This account uses OAuth authentication. Please sign in with your OAuth provider.");
+        }
         const isValidPassword = await bcrypt.compare(request.payload.password, user.password);
         if (!isValidPassword) {
           return Boom.unauthorized("Invalid password");

@@ -8,6 +8,7 @@ export function createToken(user) {
   const payload = {
     id: user._id,
     email: user.email,
+    isAdmin: user.isAdmin === true,
   };
   const options = {
     algorithm: "HS256",

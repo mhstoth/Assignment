@@ -1,6 +1,26 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { isAuthenticated } from '$lib/auth';
+	import { authStore } from '$lib/stores/auth';
+	import { onMount } from 'svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+
+	// Verwende SSR-Daten als initial State, dann client-seitig reaktiv
+	let isLoggedIn = $state(data.isAuthenticated ?? false);
+
+	onMount(() => {
+		// Synchronisiere mit authStore nach Hydration
+		const unsubscribe = authStore.subscribe((state) => {
+			isLoggedIn = state.isLoggedIn;
+		});
+
+		// Initialisiere authStore (falls noch nicht geschehen)
+		authStore.init();
+
+		return unsubscribe;
+	});
 
 	function goToLogin() {
 		goto('/login');
@@ -24,7 +44,7 @@
 			<h1 class="hero-title">Welcome to discoverRegensburg</h1>
 			<p class="hero-subtitle">Discover the most beautiful places in Regensburg</p>
 			<div class="hero-buttons">
-				{#if isAuthenticated()}
+				{#if isLoggedIn}
 					<button class="button primary-button" onclick={goToDashboard}>Go to Dashboard</button>
 				{:else}
 					<button class="button primary-button" onclick={goToLogin}>Sign In</button>

@@ -17,12 +17,25 @@ export const userMongoStore = {
   },
 
   async addUser(user) {
-    if (!user.firstName || !user.lastName || !user.email || !user.password) {
+    // firstName and email are required, lastName can be empty for OAuth users
+    if (!user.firstName || !user.email) {
+      return null;
+    }
+    if (!user.password && !user.oauthProvider) {
       return null;
     }
     const normalizedEmail = user.email.toLowerCase();
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-    const newUser = new User({ ...user, email: normalizedEmail, password: hashedPassword, isAdmin: Boolean(user.isAdmin) });
+    const userData = {
+      ...user,
+      email: normalizedEmail,
+      isAdmin: Boolean(user.isAdmin),
+    };
+    if (user.password) {
+      userData.password = await bcrypt.hash(user.password, 10);
+    } else {
+      userData.password = null;
+    }
+    const newUser = new User(userData);
     const userObj = await newUser.save();
     const u = await this.getUserById(userObj._id);
     return u;
@@ -39,6 +52,14 @@ export const userMongoStore = {
       return null;
     }
     const user = await User.findOne({ email: normalizedEmail }).lean();
+    return user;
+  },
+
+  async getUserByOAuthId(provider, oauthId) {
+    if (!provider || !oauthId) {
+      return null;
+    }
+    const user = await User.findOne({ oauthProvider: provider, oauthId: oauthId.toString() }).lean();
     return user;
   },
 

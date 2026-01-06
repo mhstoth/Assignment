@@ -69,11 +69,20 @@ suite("Placemark API tests", () => {
 
     await placemarkService.createPlacemark(placemarks.restaurant);
 
+    // As jannis, should only see jannis's placemarks (1)
     let allPlacemarks = await placemarkService.getAllPlacemarks();
-    assert.equal(allPlacemarks.length, 2);
+    assert.equal(allPlacemarks.length, 1);
+    assert.equal(allPlacemarks[0].title, placemarks.restaurant.title);
 
     await placemarkService.deleteAllUserPlacemarks();
 
+    // After deleting, jannis should have 0 placemarks
+    allPlacemarks = await placemarkService.getAllPlacemarks();
+    assert.equal(allPlacemarks.length, 0);
+
+    // Switch back to first user to verify their placemarks still exist
+    placemarkService.clearAuth();
+    await placemarkService.authenticate(users.moritz);
     allPlacemarks = await placemarkService.getAllPlacemarks();
     assert.equal(allPlacemarks.length, 1);
     assert.equal(allPlacemarks[0].title, placemarks.sightseeing.title);
@@ -85,8 +94,10 @@ suite("Placemark API tests", () => {
     const imgBuffer = readFileSync("./public/favicon.png");
     const blob = new Blob([imgBuffer]);
     const updatedPlacemark = await placemarkService.uploadImage(newPlacemark._id, blob);
-    assert.isNotNull(updatedPlacemark.img);
-    assert.include(updatedPlacemark.img, "cloudinary.com");
+    assert.isNotNull(updatedPlacemark.images);
+    assert.isArray(updatedPlacemark.images);
+    assert.isTrue(updatedPlacemark.images.length > 0);
+    assert.include(updatedPlacemark.images[0], "cloudinary.com");
     await placemarkService.deletePlacemark(updatedPlacemark._id);
   });
 });

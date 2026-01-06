@@ -76,8 +76,12 @@ export const placemarkService = {
 
   async uploadImage(id, image) {
     const formData = new FormData();
-    formData.append("imagefile", image);
-    const res = await axios.post(`${this.placemarkUrl}/api/placemarks/${id}/uploadimage`, formData);
+    formData.append("imagefiles", image);
+    const res = await axios.post(`${this.placemarkUrl}/api/placemarks/${id}/uploadimages`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return res.data;
   },
 };

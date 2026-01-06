@@ -1,5 +1,6 @@
 import { userApi } from "./api/user-api.js";
 import { placemarkApi } from "./api/placemark-api.js";
+import { oauthApi } from "./api/oauth-api.js";
 
 export const apiRoutes = [
   { method: "POST", path: "/api/users", config: userApi.create },
@@ -10,8 +11,14 @@ export const apiRoutes = [
   { method: "DELETE", path: "/api/users", config: userApi.deleteAll },
   { method: "POST", path: "/api/users/authenticate", config: userApi.authenticate },
 
+  { method: "GET", path: "/api/auth/github", config: oauthApi.githubInit },
+  { method: "GET", path: "/api/auth/github/callback", config: oauthApi.githubCallback },
+  { method: "GET", path: "/api/auth/google", config: oauthApi.googleInit },
+  { method: "GET", path: "/api/auth/google/callback", config: oauthApi.googleCallback },
+
   { method: "POST", path: "/api/placemarks", config: placemarkApi.create },
-  { method: "POST", path: "/api/placemarks/{id}/uploadimage", config: placemarkApi.uploadImage },
+  { method: "POST", path: "/api/placemarks/{id}/uploadimages", config: placemarkApi.uploadImages },
+  { method: "DELETE", path: "/api/placemarks/{id}/images/{imageUrl}", config: placemarkApi.deleteImage },
   { method: "GET", path: "/api/placemarks", config: placemarkApi.find },
   { method: "GET", path: "/api/placemarks/admin/all", config: placemarkApi.findAllForAdmin },
   { method: "GET", path: "/api/placemarks/{id}", config: placemarkApi.findOne },

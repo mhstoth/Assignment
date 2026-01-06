@@ -33,9 +33,10 @@ suite("Placemark Model tests", () => {
     const imgBuffer = readFileSync("./public/favicon.png");
     const url = await imageStore.uploadImage(imgBuffer);
 
-    const placemarkWithImage = { ...placemarks.sightseeing, img: url };
+    const placemarkWithImage = { ...placemarks.sightseeing, images: [url] };
     const newPlacemark = await db.placemarkStore.addPlacemark(placemarkWithImage);
-    assert.equal(newPlacemark.img, url);
+    assert.isArray(newPlacemark.images);
+    assert.equal(newPlacemark.images[0], url);
 
     await imageStore.deleteImage(url);
   });

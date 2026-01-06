@@ -1,17 +1,24 @@
 <script lang="ts">
-	import { userApi, placemarkApi, type User, type Placemark, getAdminTab, setAdminTab } from '$lib/api';
+	import { userApi, placemarkApi, type User, type Placemark, getAdminTab, setAdminTab, setToken, getToken } from '$lib/api';
 	import { onMount } from 'svelte';
 	// @ts-ignore
 	import Chart from 'svelte-frappe-charts';
+	import type { PageData } from './$types';
 
+	let { data }: { data: PageData } = $props();
+
+	// Initialize data from server (SSR)
 	let activeTab = $state<'users' | 'analytics'>(getAdminTab());
-	let users = $state<User[]>([]);
-	let placemarks = $state<Placemark[]>([]);
-	let loading = $state(true);
+	let users = $state<User[]>(data.users || []);
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+	let loading = $state(false);
 	let error = $state('');
 
 	onMount(() => {
-		loadData();
+		// Sync token to localStorage (for Client-Side Requests)
+		if (data.token && !getToken()) {
+			setToken(data.token);
+		}
 	});
 
 	async function loadData() {
@@ -66,7 +73,7 @@
 		};
 	});
 
-	// Chart data for Categories
+	// Chart data for Categories (Pie Chart)
 	const categoriesChartData = $derived.by(() => {
 		const categoryCounts: Record<string, number> = {};
 		placemarks.forEach((p) => {
@@ -81,6 +88,109 @@
 			datasets: [
 				{
 					values: counts,
+				},
+			],
+		};
+	});
+
+	// Chart data for Timeline (Line Chart - Placemarks created over time)
+	const timelineChartData = $derived.by(() => {
+		// Get last 6 months
+		const months: string[] = [];
+		const monthCounts: Record<string, number> = {};
+		
+		for (let i = 5; i >= 0; i--) {
+			const date = new Date();
+			date.setMonth(date.getMonth() - i);
+			const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+			months.push(monthKey);
+			monthCounts[monthKey] = 0;
+		}
+
+		// Count placemarks per month
+		placemarks.forEach((p) => {
+			if (p.createdAt) {
+				const date = new Date(p.createdAt);
+				const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+				if (monthCounts[monthKey] !== undefined) {
+					monthCounts[monthKey]++;
+				}
+			}
+		});
+
+		return {
+			labels: months,
+			datasets: [
+				{
+					name: 'New POIs',
+					values: months.map((m) => monthCounts[m]),
+					chartType: 'line',
+				},
+			],
+		};
+	});
+
+	// Chart data for Cumulative Growth (Area Chart)
+	const cumulativeGrowthData = $derived.by(() => {
+		// Get last 6 months
+		const months: string[] = [];
+		const monthCounts: Record<string, number> = {};
+		
+		for (let i = 5; i >= 0; i--) {
+			const date = new Date();
+			date.setMonth(date.getMonth() - i);
+			const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+			months.push(monthKey);
+			monthCounts[monthKey] = 0;
+		}
+
+		// Count placemarks per month
+		placemarks.forEach((p) => {
+			if (p.createdAt) {
+				const date = new Date(p.createdAt);
+				const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+				if (monthCounts[monthKey] !== undefined) {
+					monthCounts[monthKey]++;
+				}
+			}
+		});
+
+		// Calculate cumulative values
+		let cumulative = 0;
+		const cumulativeValues = months.map((m) => {
+			cumulative += monthCounts[m];
+			return cumulative;
+		});
+
+		return {
+			labels: months,
+			datasets: [
+				{
+					name: 'Total POIs',
+					values: cumulativeValues,
+				},
+			],
+		};
+	});
+
+	// Chart data for Images (Donut Chart - With Image vs Without Image)
+	const imagesChartData = $derived.by(() => {
+		let withImage = 0;
+		let withoutImage = 0;
+
+		placemarks.forEach((p) => {
+			if (p.images && p.images.length > 0) {
+				withImage++;
+			} else {
+				withoutImage++;
+			}
+		});
+
+		return {
+			labels: ['With Image', 'Without Image'],
+			datasets: [
+				{
+					values: [withImage, withoutImage],
 				},
 			],
 		};
@@ -109,16 +219,7 @@
 
 <div class="admin-container">
 	<div class="admin-header">
-		<div class="admin-header-left">
-			<img src="/favicon.png" alt="discoverRegensburg logo" class="admin-logo" />
-			<div class="admin-title-wrapper">
-				<h1 class="admin-title">Admin Dashboard</h1>
-			</div>
-		</div>
-		<nav class="admin-menu">
-			<a href="/dashboard" class="button">Dashboard</a>
-			<a href="/logout" class="button">Logout</a>
-		</nav>
+		<h1 class="admin-title">Admin Dashboard</h1>
 	</div>
 
 	{#if error}
@@ -190,8 +291,9 @@
 			<div class="admin-card">
 				<h2 class="section-title">Analytics</h2>
 				<div class="charts-container">
+					<!-- Row 1: Leaderboard & Categories -->
 					<div class="chart-card">
-						<h3 class="chart-title">Placemarks Leaderboard</h3>
+						<h3 class="chart-title"><i class="fas fa-chart-bar"></i> Placemarks Leaderboard</h3>
 						<p class="chart-subtitle">Top users by placemarks created</p>
 						<div class="chart-wrapper">
 							<Chart
@@ -201,15 +303,15 @@
 								options={{
 									colors: ['#ff6b35'],
 									tooltipOptions: {
-										formatTooltipX: (d) => d,
-										formatTooltipY: (d) => d.toFixed(0) + ' placemarks',
+										formatTooltipX: (d: string) => d,
+										formatTooltipY: (d: number) => d.toFixed(0) + ' placemarks',
 									},
 								}}
 							/>
 						</div>
 					</div>
 					<div class="chart-card">
-						<h3 class="chart-title">Placemarks by Category</h3>
+						<h3 class="chart-title"><i class="fas fa-chart-pie"></i> Placemarks by Category</h3>
 						<p class="chart-subtitle">Distribution across categories</p>
 						<div class="chart-wrapper">
 							<Chart
@@ -217,6 +319,60 @@
 								type="pie"
 								colors={['#ff6b35', '#e55a2b', '#d97a47', '#ffad7f', '#c44a1f', '#ff8c5a', '#b36a3d']}
 								maxSlices={20}
+							/>
+						</div>
+					</div>
+
+					<!-- Row 2: Timeline & Cumulative Growth -->
+					<div class="chart-card">
+						<h3 class="chart-title"><i class="fas fa-chart-line"></i> POIs Over Time</h3>
+						<p class="chart-subtitle">New placemarks per month (last 6 months)</p>
+						<div class="chart-wrapper">
+							<Chart
+								data={timelineChartData}
+								type="line"
+								colors={['#ff6b35']}
+								lineOptions={{
+									regionFill: 1,
+									hideDots: 0,
+									dotSize: 6,
+								}}
+								axisOptions={{
+									xIsSeries: true,
+								}}
+							/>
+						</div>
+					</div>
+					<div class="chart-card">
+						<h3 class="chart-title"><i class="fas fa-chart-area"></i> Cumulative Growth</h3>
+						<p class="chart-subtitle">Total POIs over time</p>
+						<div class="chart-wrapper">
+							<Chart
+								data={cumulativeGrowthData}
+								type="line"
+								colors={['#e55a2b']}
+								lineOptions={{
+									regionFill: 1,
+									hideDots: 0,
+									dotSize: 6,
+								}}
+								axisOptions={{
+									xIsSeries: true,
+								}}
+							/>
+						</div>
+					</div>
+
+					<!-- Row 3: Images Donut Chart -->
+					<div class="chart-card chart-card-full">
+						<h3 class="chart-title"><i class="fas fa-images"></i> Image Status</h3>
+						<p class="chart-subtitle">Distribution of POIs with and without images</p>
+						<div class="chart-wrapper donut-wrapper">
+							<Chart
+								data={imagesChartData}
+								type="donut"
+								colors={['#ff6b35', '#d2d2d7']}
+								maxSlices={2}
 							/>
 						</div>
 					</div>
@@ -423,11 +579,30 @@
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 	}
 
+	.chart-card-full {
+		grid-column: 1 / -1;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
+	.donut-wrapper {
+		max-width: 400px;
+		margin: 0 auto;
+	}
+
 	.chart-title {
 		font-size: 1.125rem;
 		font-weight: 600;
 		color: #1d1d1f;
 		margin: 0 0 0.5rem 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.chart-title i {
+		color: #ff6b35;
+		font-size: 1rem;
 	}
 
 	.chart-subtitle {
@@ -485,6 +660,14 @@
 	:global(svg .graph-svg-tip tspan) {
 		fill: #ffffff !important;
 		font-size: 11px !important;
+	}
+
+	/* Pie/Donut chart hover state - subtle darkening effect */
+	:global(.donut-path:hover),
+	:global(.pie-path:hover),
+	:global(.donut-path.hover),
+	:global(.pie-path.hover) {
+		filter: brightness(0.92) !important;
 	}
 
 	@media (max-width: 1024px) {
