@@ -45,6 +45,7 @@ git clone <repo-url>
 cd Assignment_Level_3
 
 # Install backend dependencies
+cd src
 npm install
 
 # Install frontend dependencies
@@ -81,6 +82,7 @@ PUBLIC_API_BASE_URL=http://localhost:3000
 
 **Terminal 1 - Backend:**
 ```bash
+cd src
 npm run dev
 ```
 Backend runs at `http://localhost:3000`
@@ -103,7 +105,6 @@ Frontend runs at `http://localhost:5173`
 
 Interactive Swagger documentation available at:
 - Local: `http://localhost:3000/documentation`
-- Production: `https://discover-regensburg-LEVEL-3.onrender.com/documentation`
 
 ### API Authentication
 
@@ -155,23 +156,6 @@ Assignment_Level_3/
 ```bash
 npm run test
 ```
-
-## Deployment
-
-- **Backend**: Render.com (Level 2 Requirement)
-- **Frontend**: Local development (Deployment not required for Level 3)
-
-Backend Production URL: `https://discover-regensburg-backend.onrender.com/`
-
-## Level 3 Requirements Checklist
-
-| Requirement | Feature | Status |
-|-------------|---------|--------|
-| **Charts** | Simple / Single Chart type | ✅ svelte-frappe-charts (Bar + Pie) |
-| **Maps** | Maps with Layers (for categories) | ✅ Leaflet with LayerControl |
-| **Images** | Single Images per POI | ✅ Cloudinary integration |
-| **Authentication** | Hashing & salting passwords | ✅ bcrypt |
-| **Architecture** | SvelteKit | ✅ SvelteKit + TypeScript |
 
 ## Author
 
