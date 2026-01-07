@@ -42,13 +42,19 @@ export async function createServer({ port, host } = {}) {
   const envPort = process.env.PORT ? Number(process.env.PORT) : undefined;
   const resolvedPort = port ?? (Number.isFinite(envPort) ? envPort : 3000);
   const resolvedHost = host ?? process.env.HOST ?? "0.0.0.0";
+  const corsOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://localhost:3000",
+  ].filter(Boolean);
 
   const server = Hapi.server({
     port: resolvedPort,
     host: resolvedHost,
     routes: {
       cors: {
-        origin: ["http://localhost:5173", "http://localhost:4173", "http://localhost:3000"],
+        origin: corsOrigins,
         credentials: true,
       },
     },
