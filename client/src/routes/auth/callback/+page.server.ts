@@ -10,13 +10,12 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	}
 
 	if (token) {
-		// Set cookie for SSR (same config as login)
 		cookies.set('jwt_token', token, {
 			path: '/',
-			httpOnly: false, // Client can read (for localStorage sync)
-			secure: false, // For localhost (in production: true)
+			httpOnly: false, 
+			secure: false, 
 			sameSite: 'lax',
-			maxAge: 60 * 60 * 24 // 24 hours
+			maxAge: 60 * 60 * 24 
 		});
 
 		return { token };

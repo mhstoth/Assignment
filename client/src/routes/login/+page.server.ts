@@ -33,16 +33,14 @@ export const actions: Actions = {
 				return fail(401, { email, error: 'Invalid response from server' });
 			}
 
-			// Set cookie for SSR
 			cookies.set('jwt_token', data.token, {
 				path: '/',
-				httpOnly: false, // Client can read (for localStorage sync)
-				secure: false, // For localhost (in production: true)
+				httpOnly: false, 
+				secure: false, 
 				sameSite: 'lax',
-				maxAge: 60 * 60 * 24 // 24 hours
+				maxAge: 60 * 60 * 24 
 			});
 
-			// Return token for localStorage sync (Client-Side UX)
 			return { success: true, token: data.token };
 		} catch (err) {
 			console.error('Login server action error:', err);

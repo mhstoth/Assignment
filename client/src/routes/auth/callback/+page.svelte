@@ -13,14 +13,11 @@
 	onMount(() => {
 		if (data.token) {
 			try {
-				// Store token in localStorage (for Client-Side UX)
 				setToken(data.token);
 
-				// Update auth store
 				const payload = JSON.parse(atob(data.token.split('.')[1]));
 				authStore.login(payload.isAdmin === true);
 
-				// Redirect to dashboard
 				goto('/dashboard');
 			} catch (err) {
 				console.error('Token processing error:', err);

@@ -23,7 +23,6 @@
 		event.stopPropagation();
 		if (onDelete) {
 			onDelete(imageUrl);
-			// Adjust current index if needed
 			if (currentIndex >= images.length - 1 && currentIndex > 0) {
 				currentIndex = currentIndex - 1;
 			}
@@ -56,10 +55,13 @@
 		{#if images.length > 1}
 			<div class="thumbnails">
 				{#each images as img, i}
-					<button
+					<div
 						class="thumbnail"
 						class:active={i === currentIndex}
 						onclick={() => currentIndex = i}
+						onkeydown={(e) => e.key === 'Enter' && (currentIndex = i)}
+						role="button"
+						tabindex="0"
 						aria-label="View image {i + 1}"
 					>
 						<img src={img} alt="Thumbnail {i + 1}" />
@@ -72,7 +74,7 @@
 								<i class="fas fa-times"></i>
 							</button>
 						{/if}
-					</button>
+					</div>
 				{/each}
 			</div>
 		{/if}

@@ -136,7 +136,10 @@
 			</div>
 
 			<div class="form-group">
-				<label for="password" class="form-label">Password</label>
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<label for="password" class="form-label">Password</label>
+					<a href="/forgot-password" class="forgot-password-link">Forgot password?</a>
+				</div>
 				<input
 					id="password"
 					name="password"
@@ -242,5 +245,14 @@
 		.oauth-section {
 			flex-direction: column;
 		}
+	}
+	.forgot-password-link {
+		font-size: 0.8rem;
+		color: #ff6b35;
+		text-decoration: none;
+	}
+
+	.forgot-password-link:hover {
+		text-decoration: underline;
 	}
 </style>

@@ -11,10 +11,8 @@
 
 	let { placemarks = [], category = '', height = 180 }: Props = $props();
 
-	// Generate unique ID for each map instance
 	const mapId = `minimap-${category.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).substring(2, 9)}`;
 	
-	// Regensburg center coordinates
 	const defaultLocation = { lat: 49.0134, lng: 12.1016 };
 	const defaultZoom = 12;
 
@@ -26,7 +24,6 @@
 		const leaflet = await import('leaflet');
 		L = leaflet.default;
 
-		// Custom orange marker for CI colors
 		const OrangeIcon = L.icon({
 			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
 			shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -49,7 +46,6 @@
 			attributionControl: false
 		});
 
-		// Add markers for placemarks
 		addMarkers(OrangeIcon);
 
 		return () => {
@@ -91,7 +87,6 @@
 	function addMarkers(icon: L.Icon) {
 		if (!L || !imap || placemarks.length === 0) return;
 
-		// Clear existing markers
 		markers.forEach(m => m.remove());
 		markers = [];
 
@@ -107,7 +102,6 @@
 			bounds.push([placemark.latitude, placemark.longitude]);
 		});
 
-		// Fit bounds to show all markers
 		if (bounds.length > 0) {
 			const latitudes = bounds.map(b => b[0]);
 			const longitudes = bounds.map(b => b[1]);

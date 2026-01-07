@@ -12,7 +12,7 @@ const buildUser = (user) => {
 
 suite("Placemark Model tests", () => {
   setup(async () => {
-    db.init();
+    await db.init("mongo");
     await db.placemarkStore.deleteAllPlacemarks();
     await db.userStore.deleteAllUsers();
     await db.userStore.addUser(buildUser(users.moritz));

@@ -7,15 +7,14 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Initialize data from server (SSR)
 	let activeTab = $state<'users' | 'analytics'>(getAdminTab());
 	let users = $state<User[]>(data.users || []);
 	let placemarks = $state<Placemark[]>(data.placemarks || []);
 	let loading = $state(false);
+	let exporting = $state(false);
 	let error = $state('');
 
 	onMount(() => {
-		// Sync token to localStorage (for Client-Side Requests)
 		if (data.token && !getToken()) {
 			setToken(data.token);
 		}
@@ -25,7 +24,6 @@
 		try {
 			loading = true;
 			error = '';
-			// Use admin endpoint to get all placemarks for analytics
 			[users, placemarks] = await Promise.all([userApi.findAll(), placemarkApi.findAllForAdmin()]);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Error loading data';
@@ -36,14 +34,12 @@
 
 	function switchTab(tab: 'users' | 'analytics') {
 		activeTab = tab;
-		setAdminTab(tab); // Save to Local Storage
+		setAdminTab(tab);
 	}
 
-	// Chart data for Placemarks Leaderboard (Placemarks per User)
 	const placemarksLeaderboardData = $derived.by(() => {
 		const userPlacemarkCounts: Record<string, number> = {};
 
-		// Count placemarks per user - normalize userid to string for comparison
 		placemarks.forEach((p) => {
 			if (p.userid) {
 				const userId = String(p.userid);
@@ -51,7 +47,6 @@
 			}
 		});
 
-		// Get user names and sort by count - normalize user._id to string for comparison
 		const leaderboard = users
 			.map((user) => {
 				const userId = String(user._id || '');
@@ -61,7 +56,7 @@
 				};
 			})
 			.sort((a, b) => b.count - a.count)
-			.slice(0, 10); // Top 10
+			.slice(0, 10);
 
 		return {
 			labels: leaderboard.map((entry) => entry.name),
@@ -73,7 +68,6 @@
 		};
 	});
 
-	// Chart data for Categories (Pie Chart)
 	const categoriesChartData = $derived.by(() => {
 		const categoryCounts: Record<string, number> = {};
 		placemarks.forEach((p) => {
@@ -93,9 +87,7 @@
 		};
 	});
 
-	// Chart data for Timeline (Line Chart - Placemarks created over time)
 	const timelineChartData = $derived.by(() => {
-		// Get last 6 months
 		const months: string[] = [];
 		const monthCounts: Record<string, number> = {};
 		
@@ -107,7 +99,6 @@
 			monthCounts[monthKey] = 0;
 		}
 
-		// Count placemarks per month
 		placemarks.forEach((p) => {
 			if (p.createdAt) {
 				const date = new Date(p.createdAt);
@@ -130,9 +121,7 @@
 		};
 	});
 
-	// Chart data for Cumulative Growth (Area Chart)
 	const cumulativeGrowthData = $derived.by(() => {
-		// Get last 6 months
 		const months: string[] = [];
 		const monthCounts: Record<string, number> = {};
 		
@@ -144,7 +133,6 @@
 			monthCounts[monthKey] = 0;
 		}
 
-		// Count placemarks per month
 		placemarks.forEach((p) => {
 			if (p.createdAt) {
 				const date = new Date(p.createdAt);
@@ -155,7 +143,6 @@
 			}
 		});
 
-		// Calculate cumulative values
 		let cumulative = 0;
 		const cumulativeValues = months.map((m) => {
 			cumulative += monthCounts[m];
@@ -173,7 +160,6 @@
 		};
 	});
 
-	// Chart data for Images (Donut Chart - With Image vs Without Image)
 	const imagesChartData = $derived.by(() => {
 		let withImage = 0;
 		let withoutImage = 0;
@@ -213,6 +199,152 @@
 			await loadData();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Error deleting all users';
+		}
+	}
+
+	async function exportData() {
+		exporting = true;
+		try {
+			const ExcelJS = (await import('exceljs')).default;
+			const workbook = new ExcelJS.Workbook();
+			workbook.creator = 'DiscoverRegensburg App';
+			workbook.created = new Date();
+
+			const getChartImage = async (chartId: string, chartName: string) => {
+				const wrapper = document.getElementById(chartId);
+				if (!wrapper) return null;
+				
+				const svg = wrapper.querySelector('svg');
+				if (!svg) return null;
+
+				const serializer = new XMLSerializer();
+				let svgString = serializer.serializeToString(svg);
+
+				const img = new Image();
+				const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+				const url = URL.createObjectURL(svgBlob);
+
+				return new Promise<{ buffer: ArrayBuffer, width: number, height: number } | null>((resolve) => {
+					img.onload = () => {
+						const canvas = document.createElement('canvas');
+						const scale = 2;
+						canvas.width = img.width * scale;
+						canvas.height = img.height * scale;
+						const ctx = canvas.getContext('2d');
+						if (!ctx) {
+							resolve(null);
+							return;
+						}
+						
+						ctx.fillStyle = '#ffffff';
+						ctx.fillRect(0, 0, canvas.width, canvas.height);
+						ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+						
+						canvas.toBlob(async (blob) => {
+							if (blob) {
+								resolve({
+									buffer: await blob.arrayBuffer(),
+									width: img.width,
+									height: img.height
+								});
+							} else {
+								resolve(null);
+							}
+							URL.revokeObjectURL(url);
+						}, 'image/png');
+					};
+					img.src = url;
+				});
+			};
+
+			const addSheetWithChart = async (name: string, chartId: string, columns: any[], rows: any[]) => {
+				const sheet = workbook.addWorksheet(name);
+				
+				
+				sheet.columns = columns;
+				sheet.addRows(rows);
+
+				
+				sheet.getRow(1).font = { bold: true };
+				
+			
+				const image = await getChartImage(chartId, name);
+				if (image) {
+					const imageId = workbook.addImage({
+						buffer: image.buffer,
+						extension: 'png',
+					});
+					
+			
+					sheet.addImage(imageId, {
+						tl: { col: columns.length + 1, row: 0 },
+						ext: { width: image.width, height: image.height }
+					});
+				}
+			};
+
+			await addSheetWithChart(
+				'Leaderboard',
+				'chart-leaderboard',
+				[{ header: 'User', key: 'name', width: 30 }, { header: 'Count', key: 'count', width: 15 }],
+				placemarksLeaderboardData.labels.map((l, i) => ({
+					name: l, count: placemarksLeaderboardData.datasets[0].values[i]
+				}))
+			);
+
+
+			await addSheetWithChart(
+				'Categories',
+				'chart-categories',
+				[{ header: 'Category', key: 'name', width: 20 }, { header: 'Count', key: 'count', width: 15 }],
+				categoriesChartData.labels.map((l, i) => ({
+					name: l, count: categoriesChartData.datasets[0].values[i]
+				}))
+			);
+
+
+			await addSheetWithChart(
+				'Timeline',
+				'chart-timeline',
+				[{ header: 'Month', key: 'month', width: 15 }, { header: 'New POIs', key: 'count', width: 15 }],
+				timelineChartData.labels.map((l, i) => ({
+					month: l, count: timelineChartData.datasets[0].values[i]
+				}))
+			);
+
+
+			await addSheetWithChart(
+				'Growth',
+				'chart-growth',
+				[{ header: 'Month', key: 'month', width: 15 }, { header: 'Total POIs', key: 'count', width: 15 }],
+				cumulativeGrowthData.labels.map((l, i) => ({
+					month: l, count: cumulativeGrowthData.datasets[0].values[i]
+				}))
+			);
+
+
+			await addSheetWithChart(
+				'Images',
+				'chart-images',
+				[{ header: 'Status', key: 'status', width: 15 }, { header: 'Count', key: 'count', width: 15 }],
+				imagesChartData.labels.map((l, i) => ({
+					status: l, count: imagesChartData.datasets[0].values[i]
+				}))
+			);
+
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(blob);
+			link.download = 'analytics_export.xlsx';
+			link.click();
+			URL.revokeObjectURL(link.href);
+
+		} catch (err) {
+			console.error(err);
+			error = 'Export failed: ' + (err instanceof Error ? err.message : String(err));
+		} finally {
+			exporting = false;
 		}
 	}
 </script>
@@ -289,13 +421,19 @@
 			</div>
 		{:else if activeTab === 'analytics'}
 			<div class="admin-card">
-				<h2 class="section-title">Analytics</h2>
+				<div class="analytics-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+					<h2 class="section-title" style="margin: 0;">Analytics</h2>
+					<button class="button export-button" onclick={exportData} disabled={exporting || loading}>
+						<i class="fas {exporting ? 'fa-spinner fa-spin' : 'fa-file-excel'}"></i>
+						<span>{exporting ? 'Converting...' : 'Export to Excel'}</span>
+					</button>
+				</div>
 				<div class="charts-container">
 					<!-- Row 1: Leaderboard & Categories -->
 					<div class="chart-card">
 						<h3 class="chart-title"><i class="fas fa-chart-bar"></i> Placemarks Leaderboard</h3>
 						<p class="chart-subtitle">Top users by placemarks created</p>
-						<div class="chart-wrapper">
+						<div class="chart-wrapper" id="chart-leaderboard">
 							<Chart
 								data={placemarksLeaderboardData}
 								type="bar"
@@ -313,7 +451,7 @@
 					<div class="chart-card">
 						<h3 class="chart-title"><i class="fas fa-chart-pie"></i> Placemarks by Category</h3>
 						<p class="chart-subtitle">Distribution across categories</p>
-						<div class="chart-wrapper">
+						<div class="chart-wrapper" id="chart-categories">
 							<Chart
 								data={categoriesChartData}
 								type="pie"
@@ -327,7 +465,7 @@
 					<div class="chart-card">
 						<h3 class="chart-title"><i class="fas fa-chart-line"></i> POIs Over Time</h3>
 						<p class="chart-subtitle">New placemarks per month (last 6 months)</p>
-						<div class="chart-wrapper">
+						<div class="chart-wrapper" id="chart-timeline">
 							<Chart
 								data={timelineChartData}
 								type="line"
@@ -346,7 +484,7 @@
 					<div class="chart-card">
 						<h3 class="chart-title"><i class="fas fa-chart-area"></i> Cumulative Growth</h3>
 						<p class="chart-subtitle">Total POIs over time</p>
-						<div class="chart-wrapper">
+						<div class="chart-wrapper" id="chart-growth">
 							<Chart
 								data={cumulativeGrowthData}
 								type="line"
@@ -367,7 +505,7 @@
 					<div class="chart-card chart-card-full">
 						<h3 class="chart-title"><i class="fas fa-images"></i> Image Status</h3>
 						<p class="chart-subtitle">Distribution of POIs with and without images</p>
-						<div class="chart-wrapper donut-wrapper">
+						<div class="chart-wrapper donut-wrapper" id="chart-images">
 							<Chart
 								data={imagesChartData}
 								type="donut"
@@ -559,6 +697,28 @@
 		color: #ff6b35;
 	}
 
+	.export-button {
+		background-color: #26a269;
+		color: white;
+		border: none;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.25rem;
+	}
+
+	.export-button:hover {
+		background-color: #26a269 !important;
+		color: white !important;
+		transform: none !important;
+		box-shadow: none !important;
+	}
+
+	.export-button:disabled {
+		background-color: #94d3b4;
+		cursor: not-allowed;
+	}
+
 	.loading-text {
 		text-align: center;
 		color: #86868b;
@@ -617,7 +777,6 @@
 		width: 100%;
 	}
 
-	/* Force all chart text to be black for readability */
 	.chart-wrapper :global(svg text),
 	.chart-wrapper :global(text),
 	.chart-wrapper :global(.legend text),
@@ -630,7 +789,6 @@
 		font-size: 12px !important;
 	}
 
-	/* Ensure legend items have black text */
 	.chart-wrapper :global(.legend),
 	.chart-wrapper :global(.legend-item),
 	.chart-wrapper :global(.legend-item-label) {
@@ -638,7 +796,6 @@
 		fill: #000000 !important;
 	}
 
-	/* Frappe Charts Tooltip - graph-svg-tip is the tooltip container */
 	:global(.graph-svg-tip) {
 		background-color: #1d1d1f !important;
 	}
@@ -655,14 +812,12 @@
 		font-size: 11px !important;
 	}
 
-	/* Also target SVG text elements directly */
 	:global(svg .graph-svg-tip text),
 	:global(svg .graph-svg-tip tspan) {
 		fill: #ffffff !important;
 		font-size: 11px !important;
 	}
 
-	/* Pie/Donut chart hover state - subtle darkening effect */
 	:global(.donut-path:hover),
 	:global(.pie-path:hover),
 	:global(.donut-path.hover),

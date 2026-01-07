@@ -63,6 +63,11 @@ export const userMongoStore = {
     return user;
   },
 
+  async getUserByResetToken(token) {
+    const user = await User.findOne({ resetToken: token }).lean();
+    return user;
+  },
+
   async deleteUserById(id) {
     try {
       await User.deleteOne({ _id: id });
@@ -78,6 +83,11 @@ export const userMongoStore = {
       return null;
     }
     const { isAdmin, ...userData } = updatedUser;
+
+    if (userData.password) {
+      userData.password = await bcrypt.hash(userData.password, 10);
+    }
+
     const user = await User.findOneAndUpdate({ _id: id }, userData, { new: true }).lean();
     return user ?? null;
   },

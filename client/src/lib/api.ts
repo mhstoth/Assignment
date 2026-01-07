@@ -39,11 +39,6 @@ export interface Placemark {
 	__v?: number;
 }
 
-/**
- * Validiert einen JWT Token
- * @param token - Der JWT Token String
- * @returns true wenn Token gültig ist, false sonst
- */
 function isValidToken(token: string): boolean {
 	try {
 		const parts = token.split('.');
@@ -52,8 +47,7 @@ function isValidToken(token: string): boolean {
 		}
 
 		const payload = JSON.parse(atob(parts[1]));
-		
-		// Prüfe Ablaufzeit
+
 		if (payload.exp && payload.exp * 1000 < Date.now()) {
 			return false;
 		}
@@ -64,11 +58,7 @@ function isValidToken(token: string): boolean {
 	}
 }
 
-/**
- * Gibt den aktuellen JWT Token zurück (falls vorhanden und gültig)
- * Entfernt automatisch abgelaufene oder ungültige Tokens
- * @returns Der gültige Token oder null
- */
+
 export function getToken(): string | null {
 	if (typeof window !== 'undefined') {
 		const token = localStorage.getItem(TOKEN_KEY);
@@ -76,10 +66,8 @@ export function getToken(): string | null {
 			if (isValidToken(token)) {
 				return token;
 			} else {
-				// Token ist ungültig oder abgelaufen - entferne ihn
 				localStorage.removeItem(TOKEN_KEY);
 				localStorage.removeItem(USER_KEY);
-				// Synchronisiere mit authStore
 				authStore.logout();
 				return null;
 			}
@@ -88,20 +76,15 @@ export function getToken(): string | null {
 	return null;
 }
 
-/**
- * Speichert einen JWT Token im Local Storage und aktualisiert den authStore
- * @param token - Der JWT Token String
- * @throws Error wenn Token ungültig ist
- */
+
 export function setToken(token: string): void {
 	if (typeof window !== 'undefined') {
-		// Validiere Token bevor er gespeichert wird
 		if (!isValidToken(token)) {
 			throw new Error('Invalid or expired token');
 		}
 
 		localStorage.setItem(TOKEN_KEY, token);
-		
+
 		try {
 			const parts = token.split('.');
 			const payload = JSON.parse(atob(parts[1]));
@@ -180,7 +163,7 @@ export function clearAllAuthData(): void {
 		// Local Storage: Entferne alle Auth-relevanten Daten
 		localStorage.removeItem(TOKEN_KEY);
 		localStorage.removeItem(USER_KEY);
-		
+
 		// Session Storage: Entferne alle Auth-relevanten Daten
 		try {
 			sessionStorage.removeItem(TOKEN_KEY);
@@ -193,17 +176,11 @@ export function clearAllAuthData(): void {
 	}
 }
 
-/**
- * Entfernt den Token aus Local Storage und Session Storage
- * Aktualisiert den authStore
- * Wird beim Logout verwendet
- */
+
 export function removeToken(): void {
 	if (typeof window !== 'undefined') {
-		// Entferne alle Auth-Daten
 		clearAllAuthData();
-		
-		// Aktualisiere authStore (dies ruft auch clearAuthData() auf)
+
 		authStore.logout();
 	}
 }
@@ -308,6 +285,20 @@ export const userApi = {
 			method: 'DELETE',
 		});
 	},
+
+	async forgotPassword(email: string): Promise<{ message: string }> {
+		return apiRequest<{ message: string }>('/api/users/forgot-password', {
+			method: 'POST',
+			body: JSON.stringify({ email }),
+		});
+	},
+
+	async resetPassword(token: string, password: string): Promise<{ message: string }> {
+		return apiRequest<{ message: string }>('/api/users/reset-password', {
+			method: 'POST',
+			body: JSON.stringify({ token, password }),
+		});
+	},
 };
 
 export const placemarkApi = {
@@ -358,7 +349,7 @@ export const placemarkApi = {
 	async uploadImages(id: string, files: File[]): Promise<Placemark> {
 		const token = getToken();
 		const formData = new FormData();
-		
+
 		files.forEach((file) => {
 			formData.append('imagefiles', file);
 		});
@@ -390,3 +381,45 @@ export const placemarkApi = {
 	},
 };
 
+export interface ImageSearchResult {
+	id: string;
+	url: string;
+	thumbnail: string;
+	title: string;
+	creator: string;
+	license: string;
+}
+
+export interface ImageSearchResponse {
+	images: ImageSearchResult[];
+	total: number;
+	page: number;
+	perPage: number;
+}
+
+export const imageSearchApi = {
+	async search(query: string, page = 1, perPage = 20): Promise<ImageSearchResponse> {
+		const token = getToken();
+		const headers: Record<string, string> = {};
+		if (token) {
+			headers['Authorization'] = `Bearer ${token}`;
+		}
+
+		const params = new URLSearchParams({
+			query,
+			page: page.toString(),
+			perPage: perPage.toString(),
+		});
+
+		const response = await fetch(
+			`${PUBLIC_API_BASE_URL}/api/images/search?${params.toString()}`,
+			{ headers }
+		);
+
+		if (!response.ok) {
+			throw new Error('Failed to search images');
+		}
+
+		return response.json();
+	},
+};

@@ -3,11 +3,12 @@
 	import { onMount } from 'svelte';
 	import LeafletMap from '$lib/components/LeafletMap.svelte';
 	import ImageGallery from '$lib/components/ImageGallery.svelte';
+	import ImageSearchModal from '$lib/components/ImageSearchModal.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let placemarks = $state<Placemark[]>(data.placemarks || []);
+	let placemarks = $state<Placemark[]>([]);
 	let loading = $state(false);
 	let error = $state('');
 
@@ -16,7 +17,13 @@
 	let listExpanded = $state(true);
 	let selectedCategory = $state<string | null>(null);
 
-	let map: LeafletMap;
+	let map = $state<LeafletMap | null>(null);
+
+	$effect(() => {
+		if (data.placemarks) {
+			placemarks = data.placemarks;
+		}
+	});
 	let mapReady = $state(false);
 
 	let title = $state('');
@@ -29,6 +36,7 @@
 	let imagePreviews = $state<string[]>([]);
 	let editingId = $state<string | null>(null);
 	let submitting = $state(false);
+	let mapEditMode = $state(false);
 
 	const defaultCategories = ['Sightseeing', 'Restaurants', 'Bars', 'Clubs'];
 	const allCategories = $derived.by(() => {
@@ -85,16 +93,42 @@
 		imageFiles = [];
 		imagePreviews = [];
 		editingId = null;
+		mapEditMode = false;
+	}
+
+	function startMapEdit() {
+		mapEditMode = true;
+		mapExpanded = true;
+		setTimeout(() => {
+			const mapSection = document.querySelector('.map-section');
+			mapSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}, 100);
+	}
+
+	function handleMapConfirm(lat: number, lng: number) {
+		latitude = lat.toFixed(6);
+		longitude = lng.toFixed(6);
+		mapEditMode = false;
+	}
+
+	function handleMapCancel() {
+		mapEditMode = false;
+	}
+
+	let showImageSearch = $state(false);
+
+	function handleSearchImagesAdded(files: File[], previews: string[]) {
+		imageFiles = [...imageFiles, ...files];
+		imagePreviews = [...imagePreviews, ...previews];
+		showImageSearch = false;
 	}
 
 	async function handleImageSelect(e: Event) {
 		const target = e.target as HTMLInputElement;
 		const newFiles = Array.from(target.files || []);
 		
-		// Füge neue Dateien zu den bereits vorhandenen hinzu
 		imageFiles = [...imageFiles, ...newFiles];
 		
-		// Erstelle Vorschau-URLs für die neuen Bilder
 		const newPreviews: string[] = [];
 		for (const file of newFiles) {
 			const preview = await new Promise<string>((resolve) => {
@@ -106,10 +140,8 @@
 			});
 			newPreviews.push(preview);
 		}
-		// Füge neue Vorschauen zu den bereits vorhandenen hinzu
 		imagePreviews = [...imagePreviews, ...newPreviews];
 		
-		// Setze das File-Input zurück, damit weitere Dateien ausgewählt werden können
 		target.value = '';
 	}
 
@@ -254,7 +286,13 @@
 		</button>
 		{#if mapExpanded}
 			<div class="collapsible-content map-content">
-				<LeafletMap bind:this={map} height={40} />
+				<LeafletMap 
+					bind:this={map} 
+					height={40}
+					editMode={mapEditMode}
+					onConfirm={handleMapConfirm}
+					onCancel={handleMapCancel}
+				/>
 			</div>
 		{/if}
 	</div>
@@ -302,14 +340,28 @@
 								<label for="images" class="form-label">
 									Images {imageFiles.length > 0 ? `(${imageFiles.length} selected)` : ''}
 								</label>
-								<input
-									id="images"
-									class="form-input form-file"
-									type="file"
-									accept="image/*"
-									multiple
-									onchange={handleImageSelect}
-								/>
+								<div class="image-buttons">
+									<label class="image-action-button">
+										<i class="fas fa-upload"></i>
+										<span>Upload Files</span>
+										<input
+											id="images"
+											type="file"
+											accept="image/*"
+											multiple
+											onchange={handleImageSelect}
+											hidden
+										/>
+									</label>
+									<button 
+										type="button" 
+										class="image-action-button"
+										onclick={() => showImageSearch = true}
+									>
+										<i class="fas fa-search"></i>
+										<span>Search Images</span>
+									</button>
+								</div>
 								{#if imagePreviews.length > 0}
 									<div class="image-previews">
 										{#each imagePreviews as preview, index}
@@ -356,8 +408,8 @@
 								</div>
 							</div>
 
-							<div class="form-row">
-								<div class="form-group form-group-half">
+							<div class="form-row location-row">
+								<div class="form-group form-group-coord">
 									<label for="latitude" class="form-label">Latitude</label>
 									<input
 										id="latitude"
@@ -369,7 +421,7 @@
 										required
 									/>
 								</div>
-								<div class="form-group form-group-half">
+								<div class="form-group form-group-coord">
 									<label for="longitude" class="form-label">Longitude</label>
 									<input
 										id="longitude"
@@ -381,6 +433,19 @@
 										required
 									/>
 								</div>
+							<div class="form-group form-group-picker">
+								<label class="form-label">&nbsp;</label>
+								<button 
+									type="button" 
+									class="map-picker-button"
+									class:active={mapEditMode}
+									onclick={startMapEdit}
+									title="Select coordinates on map"
+								>
+									<i class="fas fa-map-marker-alt"></i>
+									<span>Pick on Map</span>
+								</button>
+							</div>
 							</div>
 
 							<div class="form-actions">
@@ -496,6 +561,12 @@
 	</div>
 </div>
 
+<ImageSearchModal
+	open={showImageSearch}
+	onClose={() => showImageSearch = false}
+	onImagesAdded={handleSearchImagesAdded}
+/>
+
 <style>
 	.dashboard-container {
 		flex: 1;
@@ -511,30 +582,6 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: 1rem;
-	}
-
-	.dashboard-header-left {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.75rem;
-	}
-
-	.dashboard-logo {
-		width: 48px;
-		height: 48px;
-		object-fit: contain;
-	}
-
-	.dashboard-title-wrapper {
-		display: flex;
-		align-items: center;
-	}
-
-	.dashboard-menu {
-		display: flex;
-		gap: 1rem;
-		align-items: center;
 	}
 
 	.dashboard-title {
@@ -627,6 +674,59 @@
 		margin-top: 1rem;
 	}
 
+	/* Location Row with Map Picker */
+	.location-row {
+		align-items: flex-end;
+	}
+
+	.form-group-coord {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.form-group-picker {
+		flex-shrink: 0;
+	}
+
+	.map-picker-button {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0 1rem;
+		background: #ffffff;
+		border: 1px solid #d2d2d7;
+		border-radius: 5px;
+		cursor: pointer;
+		transition: all 0.2s;
+		color: #1d1d1f;
+		font-size: 0.875rem;
+		min-width: 130px;
+		height: 48px;
+		width: 100%;
+	}
+
+	.map-picker-button:hover {
+		background: #ff6b35;
+		border-color: #ff6b35;
+		color: white;
+	}
+
+	.map-picker-button.active {
+		background: #ff6b35;
+		border-color: #ff6b35;
+		color: white;
+	}
+
+	.map-picker-button i {
+		font-size: 1rem;
+	}
+
+	.map-picker-button span {
+		font-weight: 500;
+	}
+
 	.filter-section {
 		margin-bottom: 1.5rem;
 		padding-bottom: 1rem;
@@ -713,7 +813,7 @@
 		gap: 1rem;
 		padding: 0;
 		background: #fafafa;
-		border-radius: 5px;
+		border-radius: 6px;
 		border: 1px solid #e5e5e7;
 		transition: all 0.2s ease;
 		overflow: hidden;
@@ -796,6 +896,38 @@
 		text-align: center;
 		padding: 2rem;
 		margin: 0;
+	}
+
+	/* Image Buttons */
+	.image-buttons {
+		display: flex;
+		gap: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.image-action-button {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		background: #ffffff;
+		border: 1px solid #d2d2d7;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #1d1d1f;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.image-action-button:hover {
+		background: #ff6b35;
+		border-color: #ff6b35;
+		color: white;
+	}
+
+	.image-action-button i {
+		font-size: 0.9375rem;
 	}
 
 	/* Image Preview Styles */

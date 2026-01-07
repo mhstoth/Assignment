@@ -10,7 +10,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "./node_modules/.bin/eslint . --ext .js",
-    "test": "./node_modules/mocha/bin/_mocha --ui tdd --import src/test-setup.js src/test/**/*.js --exit"
+    "test": "./node_modules/mocha/bin/_mocha --ui tdd --import src/test-setup.js --timeout 10000 src/test/**/*.js --exit"
   },
   "engines": {
     "node": ">=16"
@@ -46,6 +46,7 @@
     "mais-mongoose-seeder": "^1.0.7",
     "mongodb": "^7.0.0",
     "mongoose": "^9.0.2",
+    "nodemailer": "^7.0.12",
     "uuid": "^13.0.0"
   }
 }

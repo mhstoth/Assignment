@@ -6,7 +6,7 @@ suite("User Model tests", () => {
   let createdUser;
 
   setup(async () => {
-    db.init();
+    await db.init("mongo");
     await db.userStore.deleteAllUsers();
     createdUser = await db.userStore.addUser(users.moritz);
   });
@@ -35,9 +35,9 @@ suite("User Model tests", () => {
   test("create user | fail bad param", async () => {
     const user = {
       firstName: "Moritz",
-      email: "moritz@diehutzlers.de",
+      // email: "moritz@diehutzlers.de", // email is required
       password: "123456",
-      // lastName is missing
+      lastName: "Hutzler",
     };
     const newUser = await db.userStore.addUser(user);
     assert.isNull(newUser);

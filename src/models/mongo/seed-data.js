@@ -33,7 +33,6 @@ export const seedData = {
   },
   placemarks: {
     _model: "Placemark",
-    // Sightseeing
     steinerneBruecke: {
       title: "Stone Bridge",
       category: "Sightseeing",
@@ -119,10 +118,9 @@ export const seedData = {
       latitude: 49.0245,
       longitude: 12.0940,
       userid: "->users.jannis",
-      images: [], // Kein Bild - für Donut-Chart Demo
+      images: [], 
       createdAt: monthsAgo(3),
     },
-    // Restaurants
     wurstkuchl: {
       title: "Historic Sausage Kitchen",
       category: "Restaurants",
@@ -188,7 +186,6 @@ export const seedData = {
       ],
       createdAt: monthsAgo(2),
     },
-    // Bars
     kneitinger: {
       title: "Kneitinger Keller",
       category: "Bars",
@@ -241,7 +238,6 @@ export const seedData = {
       ],
       createdAt: daysAgo(15),
     },
-    // Clubs
     scala: {
       title: "Scala Club",
       category: "Clubs",

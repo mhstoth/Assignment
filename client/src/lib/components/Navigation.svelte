@@ -9,30 +9,41 @@
 
 	// Initialisiere State sofort (auch für SSR)
 	// Prüfe direkt Local Storage, um sicherzustellen, dass wir den korrekten State haben
-	if (typeof window !== 'undefined') {
+	function initializeClientState() {
+		if (typeof window === 'undefined') return;
+		
 		// Stelle sicher, dass authStore initialisiert ist
 		authStore.init();
 		
 		// Hole den aktuellen State vom Store
 		const initialState = authStore.getSnapshot();
-		isLoggedIn = initialState.isLoggedIn;
-		isAdmin = initialState.isAdmin;
+		let loggedIn = initialState.isLoggedIn;
+		let admin = initialState.isAdmin;
 		
 		// Zusätzliche Validierung: Prüfe direkt, ob Token vorhanden ist
 		// Falls Store und Token nicht übereinstimmen, korrigiere den State
 		const token = getToken();
-		if (!token && isLoggedIn) {
+		if (!token && loggedIn) {
 			// Token fehlt, aber Store sagt eingeloggt -> korrigiere
-			isLoggedIn = false;
-			isAdmin = false;
+			loggedIn = false;
+			admin = false;
 			authStore.logout();
-		} else if (token && !isLoggedIn) {
+		} else if (token && !loggedIn) {
 			// Token vorhanden, aber Store sagt nicht eingeloggt -> re-initialisiere
 			authStore.init();
 			const updatedState = authStore.getSnapshot();
-			isLoggedIn = updatedState.isLoggedIn;
-			isAdmin = updatedState.isAdmin;
+			loggedIn = updatedState.isLoggedIn;
+			admin = updatedState.isAdmin;
 		}
+		
+		// Update reactive state
+		isLoggedIn = loggedIn;
+		isAdmin = admin;
+	}
+	
+	// Run on client
+	if (typeof window !== 'undefined') {
+		initializeClientState();
 	}
 
 	let unsubscribe: (() => void) | null = null;

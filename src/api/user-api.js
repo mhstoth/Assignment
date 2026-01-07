@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import { db } from "../models/db.js";
 import { UserSpec, UserSpecPlus, UserArraySpec, UserCredentialsSpec, IdSpec, JwtAuthSpec } from "../models/joi-schemas.js";
 import { createToken } from "./jwt-utils.js";
+import crypto from "crypto";
+import { emailService } from "../services/email-service.js";
 
 const requireAdmin = (request, h) => {
   if (!request.auth?.credentials?.isAdmin) {
@@ -168,4 +170,77 @@ export const userApi = {
     description: "Delete all users (admin only)",
     notes: "Deletes all users from the system - requires admin JWT",
   },
+
+  forgotPassword: {
+    auth: false,
+    handler: async function (request, h) {
+      try {
+        const { email } = request.payload;
+        const user = await db.userStore.getUserByEmail(email);
+
+        // Always return success even if email not found (security)
+        if (!user) {
+          return h.response({ message: "If an account with that email exists, we sent a link to reset your password." }).code(200);
+        }
+
+        // Generate token
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetTokenExpiry = Date.now() + 3600000; // 1 hour
+
+        // Update user
+        await db.userStore.updateUserById(user._id, {
+          firstName: user.firstName, // required by schema but handled in store
+          email: user.email,
+          resetToken,
+          resetTokenExpiry
+        });
+
+        // Send email
+        await emailService.sendPasswordResetEmail(user.email, resetToken);
+
+        return h.response({ message: "If an account with that email exists, we sent a link to reset your password." }).code(200);
+
+      } catch (err) {
+        return Boom.serverUnavailable("Database Error");
+      }
+    },
+    tags: ["api"],
+    description: "Request password reset",
+    notes: "Sends an email with reset token",
+  },
+
+  resetPassword: {
+    auth: false,
+    handler: async function (request, h) {
+      try {
+        const { token, password } = request.payload;
+
+        const user = await db.userStore.getUserByResetToken(token);
+        if (!user) {
+          return Boom.badRequest("Invalid or expired token");
+        }
+
+        if (user.resetTokenExpiry < Date.now()) {
+          return Boom.badRequest("Token expired");
+        }
+
+        // Update password and clear token
+        await db.userStore.updateUserById(user._id, {
+          firstName: user.firstName,
+          email: user.email,
+          password: password,
+          resetToken: null,
+          resetTokenExpiry: null
+        });
+
+        return h.response({ message: "Password updated successfully" }).code(200);
+
+      } catch (err) {
+        return Boom.serverUnavailable("Database Error");
+      }
+    },
+    tags: ["api"],
+    description: "Reset password",
+    notes: "Updates password using valid token",
+  }
 }
