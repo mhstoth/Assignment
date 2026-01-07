@@ -94,8 +94,9 @@ export const userApi = {
     handler: async function findOne(request, h) {
       try {
         const requesterId = request.auth?.credentials?._id?.toString();
+        const isAdmin = request.auth?.credentials?.isAdmin === true;
         const targetId = request.params.id;
-        if (requesterId !== targetId) {
+        if (!isAdmin && requesterId !== targetId) {
           return Boom.forbidden("Not authorized to view this user");
         }
         const user = await db.userStore.getUserById(request.params.id);
