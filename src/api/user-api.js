@@ -91,9 +91,13 @@ export const userApi = {
 
   findOne: {
     auth: "jwt",
-    pre: [{ method: requireAdmin }],
     handler: async function findOne(request, h) {
       try {
+        const requesterId = request.auth?.credentials?._id?.toString();
+        const targetId = request.params.id;
+        if (requesterId !== targetId) {
+          return Boom.forbidden("Not authorized to view this user");
+        }
         const user = await db.userStore.getUserById(request.params.id);
         if (user) {
           return user;
