@@ -1,0 +1,314 @@
+
+> client@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client
+Getting Svelte diagnostics...
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/ImageSearchModal.svelte:93:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	<div class="modal-backdrop" onclick={resetAndClose} onkeydown={handleKeydown} role="button" tabindex="0">
+		<div class="modal-content" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+			<div class="modal-header">
+				<h2>Search Creative Commons Images</h2>
+				<button class="close-button" onclick={resetAndClose} aria-label="Close">
+					<i class="fas fa-times"></i>
+				</button>
+			</div>
+
+			<div class="search-bar">
+				<input
+					type="text"
+					class="search-input"
+					bind:value={searchQuery}
+					placeholder="Search for images (e.g. 'Regensburg cathedral')"
+					onkeydown={(e) => e.key === 'Enter' && searchImages()}
+				/>
+				<button
+					class="search-button"
+					onclick={searchImages}
+					disabled={loading || !searchQuery.trim()}
+				>
+					<i class="fas {loading ? 'fa-spinner fa-spin' : 'fa-search'}"></i>
+					<span>{loading ? 'Searching...' : 'Search'}</span>
+				</button>
+			</div>
+
+			{#if error}
+				<div class="error-message">
+					<i class="fas fa-exclamation-circle"></i>
+					{error}
+				</div>
+			{/if}
+
+			<div class="modal-body">
+				{#if images.length === 0 && !loading}
+					<div class="empty-state">
+						<i class="fas fa-images"></i>
+						<p>Search for images to add to your placemark</p>
+					</div>
+				{:else}
+					<div class="image-grid">
+						{#each images as image}
+							<button
+								type="button"
+								class="image-item"
+								class:selected={selectedIds.has(image.id)}
+								onclick={() => toggleImage(image.id)}
+							>
+								<img src={image.thumbnail} alt={image.title} loading="lazy" />
+								{#if selectedIds.has(image.id)}
+									<div class="check-overlay">
+										<i class="fas fa-check-circle"></i>
+									</div>
+								{/if}
+								<div class="image-info">
+									<p class="image-title">{image.title}</p>
+									<p class="image-creator">by {image.creator}</p>
+								</div>
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
+
+			{#if images.length > 0}
+				<div class="modal-footer">
+					<span class="selection-count">{selectedIds.size} image(s) selected</span>
+					<button
+						class="add-button"
+						onclick={addSelectedImages}
+						disabled={selectedIds.size === 0 || downloading}
+					>
+						{#if downloading}
+							<i class="fas fa-spinner fa-spin"></i>
+							<span>Adding...</span>
+						{:else}
+							<i class="fas fa-plus"></i>
+							<span>Add {selectedIds.size} Image(s)</span>
+						{/if}
+					</button>
+				</div>
+			{/if}
+		</div>
+	</div>
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/ImageSearchModal.svelte:93:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<div class="modal-backdrop" onclick={resetAndClose} onkeydown={handleKeydown} role="button" tabindex="0">
+		<div class="modal-content" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+			<div class="modal-header">
+				<h2>Search Creative Commons Images</h2>
+				<button class="close-button" onclick={resetAndClose} aria-label="Close">
+					<i class="fas fa-times"></i>
+				</button>
+			</div>
+
+			<div class="search-bar">
+				<input
+					type="text"
+					class="search-input"
+					bind:value={searchQuery}
+					placeholder="Search for images (e.g. 'Regensburg cathedral')"
+					onkeydown={(e) => e.key === 'Enter' && searchImages()}
+				/>
+				<button
+					class="search-button"
+					onclick={searchImages}
+					disabled={loading || !searchQuery.trim()}
+				>
+					<i class="fas {loading ? 'fa-spinner fa-spin' : 'fa-search'}"></i>
+					<span>{loading ? 'Searching...' : 'Search'}</span>
+				</button>
+			</div>
+
+			{#if error}
+				<div class="error-message">
+					<i class="fas fa-exclamation-circle"></i>
+					{error}
+				</div>
+			{/if}
+
+			<div class="modal-body">
+				{#if images.length === 0 && !loading}
+					<div class="empty-state">
+						<i class="fas fa-images"></i>
+						<p>Search for images to add to your placemark</p>
+					</div>
+				{:else}
+					<div class="image-grid">
+						{#each images as image}
+							<button
+								type="button"
+								class="image-item"
+								class:selected={selectedIds.has(image.id)}
+								onclick={() => toggleImage(image.id)}
+							>
+								<img src={image.thumbnail} alt={image.title} loading="lazy" />
+								{#if selectedIds.has(image.id)}
+									<div class="check-overlay">
+										<i class="fas fa-check-circle"></i>
+									</div>
+								{/if}
+								<div class="image-info">
+									<p class="image-title">{image.title}</p>
+									<p class="image-creator">by {image.creator}</p>
+								</div>
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
+
+			{#if images.length > 0}
+				<div class="modal-footer">
+					<span class="selection-count">{selectedIds.size} image(s) selected</span>
+					<button
+						class="add-button"
+						onclick={addSelectedImages}
+						disabled={selectedIds.size === 0 || downloading}
+					>
+						{#if downloading}
+							<i class="fas fa-spinner fa-spin"></i>
+							<span>Adding...</span>
+						{:else}
+							<i class="fas fa-plus"></i>
+							<span>Add {selectedIds.size} Image(s)</span>
+						{/if}
+					</button>
+				</div>
+			{/if}
+		</div>
+	</div>
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/MiniMap.svelte:14:27
+Warn: This reference only captures the initial value of `category`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const mapId = `minimap-${category.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).substring(2, 9)}`;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/MiniMap.svelte:23:10
+Error: Argument of type '() => Promise<() => void>' is not assignable to parameter of type '() => (() => any) | Promise<never>'.
+  Type 'Promise<() => void>' is not assignable to type '(() => any) | Promise<never>'.
+    Type 'Promise<() => void>' is not assignable to type 'Promise<never>'.
+      Type '() => void' is not assignable to type 'never'. (ts)
+
+	onMount(async () => {
+		const leaflet = await import('leaflet');
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:11:29
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+	let activeTab = $state<'users' | 'analytics'>(getAdminTab());
+	let users = $state<User[]>(data.users || []);
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:12:39
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+	let users = $state<User[]>(data.users || []);
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+	let loading = $state(false);
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:540:2
+Warn: Unused CSS selector ".admin-header-left"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.admin-header-left {
+		display: flex;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:547:2
+Warn: Unused CSS selector ".admin-logo"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.admin-logo {
+		width: 48px;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:553:2
+Warn: Unused CSS selector ".admin-title-wrapper"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.admin-title-wrapper {
+		display: flex;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte:566:2
+Warn: Unused CSS selector ".admin-menu"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.admin-menu {
+		display: flex;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:437:9
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+							<div class="form-group form-group-picker">
+								<label class="form-label">&nbsp;</label>
+								<button
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1026:2
+Warn: Unused CSS selector ".form-file"
+https://svelte.dev/e/css_unused_selector (svelte)
+	/* File Input Styling */
+	.form-file {
+		padding: 0.75rem 1rem;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1036:2
+Warn: Unused CSS selector ".form-file:hover"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.form-file:hover {
+		border-color: #ff6b35;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1041:2
+Warn: Unused CSS selector ".form-file:focus"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.form-file:focus {
+		border-color: #ff6b35;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1047:2
+Warn: Unused CSS selector ".form-file::file-selector-button"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.form-file::file-selector-button {
+		padding: 0.5rem 1rem;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1060:2
+Warn: Unused CSS selector ".form-file::file-selector-button:hover"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.form-file::file-selector-button:hover {
+		background: #e55a2b;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1067:2
+Warn: Unused CSS selector ".form-group:has(.form-file) .form-label"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+	.form-group:has(.form-file) .form-label {
+		display: flex;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte:1154:3
+Warn: Unused CSS selector ".form-file::file-selector-button"
+https://svelte.dev/e/css_unused_selector (svelte)
+
+		.form-file::file-selector-button {
+			padding: 0.4rem 0.75rem;
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/map/+page.svelte:10:39
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+	let map: LeafletMap;
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+	let loading = $state(false);
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/map/+page.svelte:9:6
+Warn: `map` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update (svelte)
+
+	let map: LeafletMap;
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
+
+====================================
+svelte-check found 1 error and 19 warnings in 5 files

@@ -7,14 +7,14 @@
 	let { data }: { data: PageData } = $props();
 
 	let map: LeafletMap;
-	let placemarks = $state(data.placemarks || []);
+	let placemarks = $state<Placemark[]>(data.placemarks || []);
 	let loading = $state(false);
 	let error = $state('');
 	let mapReady = $state(false);
 	let categoryMapsExpanded = $state(true);
 
 	const categories = $derived.by(() => {
-		const cats = [...new Set(placemarks.map((p) => p.category))].sort();
+		const cats = [...new Set(placemarks.map((p: Placemark) => p.category))].sort();
 		return cats;
 	});
 
@@ -150,7 +150,7 @@
 			<p class="legend-title">Legend</p>
 			<p class="legend-info">
 				{placemarks.length} placemark{placemarks.length !== 1 ? 's' : ''} across
-				{new Set(placemarks.map((p) => p.category)).size} categories
+				{categories.length} categories
 			</p>
 		</div>
 	{/if}

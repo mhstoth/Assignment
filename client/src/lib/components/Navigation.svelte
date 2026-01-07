@@ -3,45 +3,34 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { getToken } from '$lib/api';
 
-	// Initial State für SSR (wird beim Hydration aktualisiert)
 	let isLoggedIn = $state(false);
 	let isAdmin = $state(false);
 
-	// Initialisiere State sofort (auch für SSR)
-	// Prüfe direkt Local Storage, um sicherzustellen, dass wir den korrekten State haben
 	function initializeClientState() {
 		if (typeof window === 'undefined') return;
 		
-		// Stelle sicher, dass authStore initialisiert ist
 		authStore.init();
 		
-		// Hole den aktuellen State vom Store
 		const initialState = authStore.getSnapshot();
 		let loggedIn = initialState.isLoggedIn;
 		let admin = initialState.isAdmin;
 		
-		// Zusätzliche Validierung: Prüfe direkt, ob Token vorhanden ist
-		// Falls Store und Token nicht übereinstimmen, korrigiere den State
 		const token = getToken();
 		if (!token && loggedIn) {
-			// Token fehlt, aber Store sagt eingeloggt -> korrigiere
 			loggedIn = false;
 			admin = false;
 			authStore.logout();
 		} else if (token && !loggedIn) {
-			// Token vorhanden, aber Store sagt nicht eingeloggt -> re-initialisiere
 			authStore.init();
 			const updatedState = authStore.getSnapshot();
 			loggedIn = updatedState.isLoggedIn;
 			admin = updatedState.isAdmin;
 		}
 		
-		// Update reactive state
 		isLoggedIn = loggedIn;
 		isAdmin = admin;
 	}
 	
-	// Run on client
 	if (typeof window !== 'undefined') {
 		initializeClientState();
 	}
@@ -50,34 +39,26 @@
 	let checkInterval: ReturnType<typeof setInterval> | null = null;
 
 	onMount(() => {
-		// Stelle sicher, dass der Store beim Mount nochmal initialisiert wird
 		authStore.init();
 		
-		// Aktualisiere State mit aktuellen Werten
 		const currentState = authStore.getSnapshot();
 		isLoggedIn = currentState.isLoggedIn;
 		isAdmin = currentState.isAdmin;
 		
-		// Abonniere den Store für reaktive Updates
 		unsubscribe = authStore.subscribe((state) => {
 			isLoggedIn = state.isLoggedIn;
 			isAdmin = state.isAdmin;
 		});
 		
-		// Zusätzliche Sicherheit: Prüfe alle 200ms, ob sich der State geändert hat
-		// Dies stellt sicher, dass die Navigation auch bei manuellen Local Storage Änderungen reagiert
 		checkInterval = setInterval(() => {
-			// Prüfe direkt Local Storage
 			const token = getToken();
 			const currentState = authStore.getSnapshot();
 			
-			// Synchronisiere: Wenn Token fehlt, aber Store sagt eingeloggt -> korrigiere
 			if (!token && currentState.isLoggedIn) {
 				authStore.logout();
 				isLoggedIn = false;
 				isAdmin = false;
 			}
-			// Synchronisiere: Wenn State sich geändert hat, aktualisiere lokale Variablen
 			else if (isLoggedIn !== currentState.isLoggedIn || isAdmin !== currentState.isAdmin) {
 				isLoggedIn = currentState.isLoggedIn;
 				isAdmin = currentState.isAdmin;
@@ -86,7 +67,6 @@
 	});
 
 	onDestroy(() => {
-		// Cleanup: Entferne Subscription und Interval
 		if (unsubscribe) {
 			unsubscribe();
 		}

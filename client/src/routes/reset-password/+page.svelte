@@ -16,7 +16,7 @@
       return;
     }
     
-    if (password.length < 5) { // Simple validation
+    if (password.length < 5) {
       error = 'Password must be at least 5 characters';
       return;
     }

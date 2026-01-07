@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { Map as LeafletMap, Control, LayerGroup, Marker } from 'leaflet';
+	/* eslint-disable no-undef */
+	import { onMount, onDestroy } from 'svelte';
+	import type { Map as LeafletMap, Control, LayerGroup, Marker, LeafletMouseEvent, DragEndEvent } from 'leaflet';
 
 	interface Props {
 		height?: number;
@@ -70,7 +71,7 @@
 
 		control = L.control.layers(baseLayers, {}).addTo(imap);
 
-		imap.on('click', (e: L.LeafletMouseEvent) => {
+		imap.on('click', (e: LeafletMouseEvent) => {
 			if (editMode) {
 				pendingLat = e.latlng.lat;
 				pendingLng = e.latlng.lng;
@@ -99,7 +100,7 @@
 				zIndexOffset: 1000,
 				icon: BlueIcon
 			});
-			editMarker.on('dragend', (e: L.DragEndEvent) => {
+			editMarker.on('dragend', (e: DragEndEvent) => {
 				const pos = e.target.getLatLng();
 				pendingLat = pos.lat;
 				pendingLng = pos.lng;

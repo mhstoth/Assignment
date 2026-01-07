@@ -10,7 +10,6 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
 	}
 
 	try {
-		// Decode JWT payload (Node.js compatible - Buffer is available in server context)
 		const base64Payload = token.split('.')[1];
 		const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf-8'));
 		

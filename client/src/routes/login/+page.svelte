@@ -11,11 +11,10 @@
 	let error = $state('');
 	let loading = $state(false);
 
-	// React to form changes from server action
 	$effect(() => {
 		const form = $page.form;
 		if (form?.success && form?.token) {
-			setToken(form.token); // Sync to localStorage for Client-Side UX
+			setToken(form.token);
 			goto('/dashboard');
 		}
 		if (form?.error) {
@@ -28,7 +27,6 @@
 	});
 
 	onMount(() => {
-		// Check for OAuth error in URL
 		const errorParam = $page.url.searchParams.get('error');
 		if (errorParam) {
 			const errorMessages: Record<string, string> = {
@@ -98,7 +96,7 @@
 					if (data.success && data.token) {
 						setToken(data.token);
 						goto('/dashboard');
-						return; // Don't call update() when redirecting
+						return;
 					} else if (data.error) {
 						error = data.error;
 						if (data.email) {
@@ -115,7 +113,6 @@
 					}
 				}
 				
-				// Update form for non-redirect cases
 				await update();
 			};
 		}}

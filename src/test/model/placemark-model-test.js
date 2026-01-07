@@ -16,6 +16,12 @@ suite("Placemark Model tests", () => {
     await db.placemarkStore.deleteAllPlacemarks();
     await db.userStore.deleteAllUsers();
     await db.userStore.addUser(buildUser(users.moritz));
+    imageStore.uploadImage = async function (image) {
+      return "http://res.cloudinary.com/mock/image/upload/sample.png";
+    };
+    imageStore.deleteImage = async function (id) {
+      return true;
+    };
     const promises = [];
     for (let i = 0; i < 5; i += 1) {
       promises.push(db.placemarkStore.addPlacemark({ ...placemarks.sightseeing }));

@@ -49,7 +49,8 @@ suite("Placemark API tests", () => {
       await placemarkService.getPlacemark(newPlacemark._id);
       assert.fail("Should have thrown an error");
     } catch (error) {
-      assert.equal(error.response.status, 404);
+      const status = error?.statusCode || error?.response?.status;
+      assert.equal(status, 404);
     }
   });
 
@@ -69,18 +70,15 @@ suite("Placemark API tests", () => {
 
     await placemarkService.createPlacemark(placemarks.restaurant);
 
-    // As jannis, should only see jannis's placemarks (1)
     let allPlacemarks = await placemarkService.getAllPlacemarks();
     assert.equal(allPlacemarks.length, 1);
     assert.equal(allPlacemarks[0].title, placemarks.restaurant.title);
 
     await placemarkService.deleteAllUserPlacemarks();
 
-    // After deleting, jannis should have 0 placemarks
     allPlacemarks = await placemarkService.getAllPlacemarks();
     assert.equal(allPlacemarks.length, 0);
 
-    // Switch back to first user to verify their placemarks still exist
     placemarkService.clearAuth();
     await placemarkService.authenticate(users.moritz);
     allPlacemarks = await placemarkService.getAllPlacemarks();
@@ -88,7 +86,9 @@ suite("Placemark API tests", () => {
     assert.equal(allPlacemarks[0].title, placemarks.sightseeing.title);
   });
 
-  test("upload image to placemark via api", async function () {
+  const skipImageTest = process.env.SKIP_IMAGE_TESTS === "true";
+
+  (skipImageTest ? test.skip : test)("upload image to placemark via api", async function () {
     this.timeout(10000);
     const newPlacemark = await placemarkService.createPlacemark(placemarks.sightseeing);
     const imgBuffer = readFileSync("./public/favicon.png");

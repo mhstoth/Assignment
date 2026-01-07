@@ -1,6 +1,7 @@
 <script lang="ts">
+	/* eslint-disable no-undef */
 	import { onMount } from 'svelte';
-	import type { Map as LeafletMapType, Marker } from 'leaflet';
+	import type { Map as LeafletMapType, Marker, Icon } from 'leaflet';
 	import type { Placemark } from '$lib/api';
 
 	interface Props {
@@ -20,33 +21,35 @@
 	let imap: LeafletMapType;
 	let markers: Marker[] = [];
 
-	onMount(async () => {
-		const leaflet = await import('leaflet');
-		L = leaflet.default;
+	onMount(() => {
+		(async () => {
+			const leaflet = await import('leaflet');
+			L = leaflet.default;
 
-		const OrangeIcon = L.icon({
-			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-			shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-			iconSize: [20, 33],
-			iconAnchor: [10, 33],
-			popupAnchor: [1, -28],
-			shadowSize: [33, 33]
-		});
+			const OrangeIcon = L.icon({
+				iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+				shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+				iconSize: [20, 33],
+				iconAnchor: [10, 33],
+				popupAnchor: [1, -28],
+				shadowSize: [33, 33]
+			});
 
-		const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			maxZoom: 19,
-			attribution: '© OSM'
-		});
+			const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '© OSM'
+			});
 
-		imap = L.map(mapId, {
-			center: [defaultLocation.lat, defaultLocation.lng],
-			zoom: defaultZoom,
-			layers: [tileLayer],
-			zoomControl: false,
-			attributionControl: false
-		});
+			imap = L.map(mapId, {
+				center: [defaultLocation.lat, defaultLocation.lng],
+				zoom: defaultZoom,
+				layers: [tileLayer],
+				zoomControl: false,
+				attributionControl: false
+			});
 
-		addMarkers(OrangeIcon);
+			addMarkers(OrangeIcon);
+		})();
 
 		return () => {
 			if (imap) {
@@ -84,7 +87,7 @@
 		`;
 	}
 
-	function addMarkers(icon: L.Icon) {
+	function addMarkers(icon: Icon) {
 		if (!L || !imap || placemarks.length === 0) return;
 
 		markers.forEach(m => m.remove());

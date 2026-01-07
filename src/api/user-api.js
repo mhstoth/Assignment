@@ -1,9 +1,9 @@
 import Boom from "@hapi/boom";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { db } from "../models/db.js";
 import { UserSpec, UserSpecPlus, UserArraySpec, UserCredentialsSpec, IdSpec, JwtAuthSpec } from "../models/joi-schemas.js";
 import { createToken } from "./jwt-utils.js";
-import crypto from "crypto";
 import { emailService } from "../services/email-service.js";
 
 const requireAdmin = (request, h) => {
@@ -178,24 +178,20 @@ export const userApi = {
         const { email } = request.payload;
         const user = await db.userStore.getUserByEmail(email);
 
-        // Always return success even if email not found (security)
         if (!user) {
           return h.response({ message: "If an account with that email exists, we sent a link to reset your password." }).code(200);
         }
 
-        // Generate token
         const resetToken = crypto.randomBytes(32).toString("hex");
-        const resetTokenExpiry = Date.now() + 3600000; // 1 hour
+        const resetTokenExpiry = Date.now() + 3600000;
 
-        // Update user
         await db.userStore.updateUserById(user._id, {
-          firstName: user.firstName, // required by schema but handled in store
+          firstName: user.firstName,
           email: user.email,
           resetToken,
           resetTokenExpiry
         });
 
-        // Send email
         await emailService.sendPasswordResetEmail(user.email, resetToken);
 
         return h.response({ message: "If an account with that email exists, we sent a link to reset your password." }).code(200);
@@ -224,7 +220,6 @@ export const userApi = {
           return Boom.badRequest("Token expired");
         }
 
-        // Update password and clear token
         await db.userStore.updateUserById(user._id, {
           firstName: user.firstName,
           email: user.email,

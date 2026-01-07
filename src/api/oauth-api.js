@@ -51,7 +51,6 @@ export const oauthApi = {
           return Boom.serverUnavailable("GitHub OAuth not configured");
         }
 
-        // Exchange code for access token
         const tokenResponse = await Wreck.post("https://github.com/login/oauth/access_token", {
           payload: JSON.stringify({
             client_id: clientId,
@@ -73,7 +72,6 @@ export const oauthApi = {
 
         const accessToken = tokenData.access_token;
 
-        // Get user info from GitHub
         const userResponse = await Wreck.get("https://api.github.com/user", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -84,8 +82,7 @@ export const oauthApi = {
 
         const githubUser = JSON.parse(userResponse.payload.toString());
 
-        // Get user email (may require additional request)
-        let email = githubUser.email;
+        let {email} = githubUser;
         if (!email) {
           const emailResponse = await Wreck.get("https://api.github.com/user/emails", {
             headers: {
@@ -103,33 +100,27 @@ export const oauthApi = {
           return h.redirect(`${FRONTEND_URL}/login?error=email_required`);
         }
 
-        // Find or create user
         let user = await db.userStore.getUserByOAuthId("github", githubUser.id.toString());
 
         if (!user) {
-          // Check if user exists by email (link OAuth to existing account)
           user = await db.userStore.getUserByEmail(email);
           if (user) {
-            // Link OAuth account to existing user
             try {
               await db.userStore.updateUserById(user._id, {
                 oauthProvider: "github",
                 oauthId: githubUser.id.toString(),
               });
-              // Re-fetch user to get updated data
               user = await db.userStore.getUserById(user._id);
             } catch (linkError) {
               console.error("Error linking OAuth account:", linkError);
-              // Continue with existing user even if linking fails
             }
           } else {
-            // Create new OAuth user
             const nameParts = (githubUser.name || githubUser.login || "").split(" ");
             const newUserData = {
               firstName: nameParts[0] || githubUser.login || "User",
               lastName: nameParts.slice(1).join(" ") || "",
               email: email,
-              password: null, // OAuth users have no password
+              password: null,
               oauthProvider: "github",
               oauthId: githubUser.id.toString(),
               isAdmin: false,
@@ -138,11 +129,9 @@ export const oauthApi = {
             try {
               user = await db.userStore.addUser(newUserData);
             } catch (createError) {
-              // If creation fails (e.g., duplicate email), try to fetch the existing user
               console.error("Error creating OAuth user, trying to fetch existing:", createError.message);
               user = await db.userStore.getUserByEmail(email);
               if (user) {
-                // Try to link OAuth to the existing user
                 try {
                   await db.userStore.updateUserById(user._id, {
                     oauthProvider: "github",
@@ -166,10 +155,8 @@ export const oauthApi = {
           return h.redirect(`${FRONTEND_URL}/login?error=user_creation_failed`);
         }
 
-        // Generate JWT token
         const token = createToken(user);
 
-        // Redirect to frontend callback with token
         return h.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
       } catch (err) {
         console.error("GitHub OAuth callback error:", err);
@@ -228,7 +215,6 @@ export const oauthApi = {
 
         const redirectUri = `${API_URL}/api/auth/google/callback`;
 
-        // Exchange code for access token
         const tokenResponse = await Wreck.post("https://oauth2.googleapis.com/token", {
           payload: new URLSearchParams({
             code: code,
@@ -251,7 +237,6 @@ export const oauthApi = {
 
         const accessToken = tokenData.access_token;
 
-        // Get user info from Google
         const userResponse = await Wreck.get("https://www.googleapis.com/oauth2/v2/userinfo", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -265,33 +250,27 @@ export const oauthApi = {
           return h.redirect(`${FRONTEND_URL}/login?error=email_required`);
         }
 
-        // Find or create user
         let user = await db.userStore.getUserByOAuthId("google", googleUser.id);
 
         if (!user) {
-          // Check if user exists by email (link OAuth to existing account)
           user = await db.userStore.getUserByEmail(googleUser.email);
           if (user) {
-            // Link OAuth account to existing user
             try {
               await db.userStore.updateUserById(user._id, {
                 oauthProvider: "google",
                 oauthId: googleUser.id,
               });
-              // Re-fetch user to get updated data
               user = await db.userStore.getUserById(user._id);
             } catch (linkError) {
               console.error("Error linking OAuth account:", linkError);
-              // Continue with existing user even if linking fails
             }
           } else {
-            // Create new OAuth user
             const nameParts = (googleUser.name || "").split(" ");
             const newUserData = {
               firstName: nameParts[0] || googleUser.given_name || "User",
               lastName: nameParts.slice(1).join(" ") || googleUser.family_name || "",
               email: googleUser.email,
-              password: null, // OAuth users have no password
+              password: null,
               oauthProvider: "google",
               oauthId: googleUser.id,
               isAdmin: false,
@@ -300,11 +279,9 @@ export const oauthApi = {
             try {
               user = await db.userStore.addUser(newUserData);
             } catch (createError) {
-              // If creation fails (e.g., duplicate email), try to fetch the existing user
               console.error("Error creating OAuth user, trying to fetch existing:", createError.message);
               user = await db.userStore.getUserByEmail(googleUser.email);
               if (user) {
-                // Try to link OAuth to the existing user
                 try {
                   await db.userStore.updateUserById(user._id, {
                     oauthProvider: "google",
@@ -328,10 +305,8 @@ export const oauthApi = {
           return h.redirect(`${FRONTEND_URL}/login?error=user_creation_failed`);
         }
 
-        // Generate JWT token
         const token = createToken(user);
 
-        // Redirect to frontend callback with token
         return h.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
       } catch (err) {
         console.error("Google OAuth callback error:", err);

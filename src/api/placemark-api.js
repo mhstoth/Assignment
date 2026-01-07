@@ -239,30 +239,32 @@ export const placemarkApi = {
         if (placemark.userid?.toString() !== userId) {
           return Boom.forbidden("You can only upload images to your own placemarks");
         }
-        
-        const files = Array.isArray(request.payload.imagefiles) 
-          ? request.payload.imagefiles 
-          : (request.payload.imagefiles ? [request.payload.imagefiles] : []);
-        
+
+        let files = [];
+        if (Array.isArray(request.payload.imagefiles)) {
+          files = request.payload.imagefiles;
+        } else if (request.payload.imagefiles) {
+          files = [request.payload.imagefiles];
+        }
+
         if (files.length === 0) {
           return Boom.badRequest("No images provided");
         }
-        
+
         const urls = [];
         for (const file of files) {
           if (file && Object.keys(file).length > 0) {
-            // Extract buffer from Hapi file object
             const buffer = file._data || file;
             const url = await imageStore.uploadImage(buffer);
             urls.push(url);
           }
         }
-        
+
         if (!placemark.images) {
           placemark.images = [];
         }
         placemark.images = [...placemark.images, ...urls];
-        
+
         await db.placemarkStore.updatePlacemarkById(placemark._id, placemark);
         return h.response(placemark).code(201);
       } catch (err) {
@@ -309,19 +311,19 @@ export const placemarkApi = {
         if (placemark.userid?.toString() !== userId) {
           return Boom.forbidden("You can only delete images from your own placemarks");
         }
-        
+
         const imageUrl = decodeURIComponent(request.params.imageUrl);
-        
+
         if (!placemark.images || !placemark.images.includes(imageUrl)) {
           return Boom.notFound("Image not found in placemark");
         }
-        
+
         placemark.images = placemark.images.filter(img => img !== imageUrl);
-        
+
         await imageStore.deleteImage(imageUrl).catch(err => {
           console.log("Cloudinary delete failed:", err);
         });
-        
+
         await db.placemarkStore.updatePlacemarkById(placemark._id, placemark);
         return h.response(placemark).code(200);
       } catch (err) {

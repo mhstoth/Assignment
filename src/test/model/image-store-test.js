@@ -2,7 +2,11 @@ import { readFileSync, existsSync } from "fs";
 import { assert } from "chai";
 import { imageStore } from "../../models/image-store.js";
 
-suite("ImageStore tests", () => {
+const skipCloudinary = process.env.SKIP_IMAGE_TESTS === "true";
+
+const testSuite = skipCloudinary ? suite.skip : suite;
+
+testSuite("ImageStore tests", () => {
   setup(async () => {
     if (!existsSync("./public/favicon.png")) {
       throw new Error("Test image ./public/favicon.png not found");

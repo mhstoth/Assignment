@@ -17,7 +17,6 @@ export const userMongoStore = {
   },
 
   async addUser(user) {
-    // firstName and email are required, lastName can be empty for OAuth users
     if (!user.firstName || !user.email) {
       return null;
     }

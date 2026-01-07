@@ -75,4 +75,6 @@ export const placemarks = {
   },
 };
 
-export const serviceUrl = "http://localhost:3000";
+const testPort = process.env.TEST_PORT || 3000;
+const testHost = process.env.TEST_HOST || "127.0.0.1";
+export const serviceUrl = `http://${testHost}:${testPort}`;

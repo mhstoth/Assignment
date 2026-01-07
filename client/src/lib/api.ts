@@ -149,26 +149,14 @@ export function setAdminTab(tab: 'users' | 'analytics'): void {
 	}
 }
 
-/**
- * Entfernt den Token aus Local Storage und Session Storage
- * Aktualisiert den authStore
- * Wird beim Logout verwendet
- */
-/**
- * Entfernt ALLE Auth-Daten aus Local Storage und Session Storage
- * Wird beim vollständigen Logout verwendet
- */
 export function clearAllAuthData(): void {
 	if (typeof window !== 'undefined') {
-		// Local Storage: Entferne alle Auth-relevanten Daten
 		localStorage.removeItem(TOKEN_KEY);
 		localStorage.removeItem(USER_KEY);
 
-		// Session Storage: Entferne alle Auth-relevanten Daten
 		try {
 			sessionStorage.removeItem(TOKEN_KEY);
 			sessionStorage.removeItem(USER_KEY);
-			// Optional: Session Storage komplett leeren
 			sessionStorage.clear();
 		} catch (err) {
 			console.warn('[API] Could not clear sessionStorage:', err);

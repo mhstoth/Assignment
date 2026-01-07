@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { userApi, placemarkApi, type User, type Placemark, getAdminTab, setAdminTab, setToken, getToken } from '$lib/api';
-	import { onMount } from 'svelte';
-	// @ts-ignore
-	import Chart from 'svelte-frappe-charts';
+import { onMount } from 'svelte';
+import Chart from 'svelte-frappe-charts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -845,4 +844,3 @@
 		}
 	}
 </style>
-

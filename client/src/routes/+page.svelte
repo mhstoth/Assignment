@@ -7,21 +7,17 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Verwende SSR-Daten als initial State, dann client-seitig reaktiv
 	let isLoggedIn = $state(false);
 
-	// Initialize from SSR data
 	$effect(() => {
 		isLoggedIn = data.isAuthenticated ?? false;
 	});
 
 	onMount(() => {
-		// Synchronisiere mit authStore nach Hydration
 		const unsubscribe = authStore.subscribe((state) => {
 			isLoggedIn = state.isLoggedIn;
 		});
 
-		// Initialisiere authStore (falls noch nicht geschehen)
 		authStore.init();
 
 		return unsubscribe;

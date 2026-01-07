@@ -26,22 +26,21 @@ suite("User Model tests", () => {
     assert.equal(storedUser.firstName, user.firstName);
     assert.equal(storedUser.lastName, user.lastName);
     assert.equal(storedUser.email, user.email);
-    // Password should be hashed, not plain text
     assert.isNotNull(storedUser.password);
     assert.notEqual(storedUser.password, user.password);
-    assert.include(storedUser.password, "$2b$"); // bcrypt hash prefix
+    assert.include(storedUser.password, "$2b$");
   });
 
   test("create user | fail bad param", async () => {
     const user = {
       firstName: "Moritz",
-      // email: "moritz@diehutzlers.de", // email is required
       password: "123456",
       lastName: "Hutzler",
     };
     const newUser = await db.userStore.addUser(user);
     assert.isNull(newUser);
   });
+
 
   test("get user by email | succeed", async () => {
     const user = await db.userStore.getUserByEmail(users.moritz.email);
@@ -50,10 +49,9 @@ suite("User Model tests", () => {
     assert.equal(user.firstName, users.moritz.firstName);
     assert.equal(user.lastName, users.moritz.lastName);
     assert.equal(user.email, users.moritz.email);
-    // Password should be hashed, not plain text
     assert.isNotNull(user.password);
     assert.notEqual(user.password, users.moritz.password);
-    assert.include(user.password, "$2b$"); // bcrypt hash prefix
+    assert.include(user.password, "$2b$");
   });
 
   test("get user by email | fail bad param", async () => {

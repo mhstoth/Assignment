@@ -243,7 +243,7 @@
 
 		placemarks.forEach((placemark) => {
 			const popupContent = createPopupContent(placemark);
-			map.addMarker(placemark.latitude, placemark.longitude, popupContent, placemark.category);
+			if (map) map.addMarker(placemark.latitude, placemark.longitude, popupContent, placemark.category);
 			bounds.push([placemark.latitude, placemark.longitude]);
 		});
 
@@ -526,7 +526,7 @@
 												<div class="placemark-image">
 													<ImageGallery 
 														images={placemark.images || []} 
-														onDelete={placemark._id ? (url) => handleDeleteImage(placemark._id, url) : undefined}
+														onDelete={placemark._id ? (url) => handleDeleteImage(placemark._id as string, url) : undefined}
 													/>
 												</div>
 												<div class="placemark-content">

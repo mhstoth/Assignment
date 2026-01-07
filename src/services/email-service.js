@@ -3,16 +3,14 @@ import nodemailer from "nodemailer";
 export const emailService = {
   sendPasswordResetEmail: async (email, token) => {
     try {
-      let transporter;
-
       if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
         console.warn("SMTP credentials missing in .env. Email not sent.");
         return null;
       }
 
-      transporter = nodemailer.createTransport({
+      const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT) || 587,
+        port: parseInt(process.env.SMTP_PORT, 10) || 587,
         secure: process.env.SMTP_SECURE === "true",
         auth: {
           user: process.env.SMTP_USER,
@@ -23,7 +21,7 @@ export const emailService = {
       const resetLink = `http://localhost:5173/reset-password?token=${token}`;
 
       const info = await transporter.sendMail({
-        from: '"Discover Regensburg" <no-reply@discover-regensburg.com>', 
+        from: "\"Discover Regensburg\" <no-reply@discover-regensburg.com>",
         to: email,
         subject: "Password Reset Request",
         text: `You requested a password reset. Please use this link to reset your password: ${resetLink}. This link expires in 1 hour.`,
@@ -39,7 +37,7 @@ export const emailService = {
             <p>This link expires in 1 hour.</p>
             <p>If you did not request this, please ignore this email.</p>
           </div>
-        `, 
+        `,
       });
 
       console.log("Message sent to %s via SMTP. MessageId: %s", email, info.messageId);

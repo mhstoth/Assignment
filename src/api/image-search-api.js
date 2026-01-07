@@ -8,7 +8,7 @@ export const imageSearchApi = {
       try {
         const { query, page = 1, perPage = 20 } = request.query;
 
-        const apiUrl = `https://api.openverse.org/v1/images/`;
+        const apiUrl = "https://api.openverse.org/v1/images/";
         const params = new URLSearchParams({
           q: query,
           page: page.toString(),
@@ -39,8 +39,8 @@ export const imageSearchApi = {
         return {
           images,
           total: data.result_count || 0,
-          page: parseInt(page),
-          perPage: parseInt(perPage),
+          page: parseInt(page, 10),
+          perPage: parseInt(perPage, 10),
         };
       } catch (err) {
         console.error("Openverse API error:", err);

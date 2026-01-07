@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "b-master" ]
+    branches: [ "b-master", "develop" ]
   pull_request:
-    branches: [ "b-master" ]
+    branches: [ "b-master", "develop" ]
 
 jobs:
   backend-test:
@@ -13,7 +13,7 @@ jobs:
 
     services:
       mongodb:
-        image: mongo:6.0
+        image: mongo:5.0
         ports:
           - 27017:27017
         options: >-
@@ -46,11 +46,21 @@ jobs:
         DB: mongodb://localhost:27017/test-db
         COOKIE_NAME: placemark-test-cookie
         COOKIE_PASSWORD: secretpasswordforciwhichislongenoughtobasecure32chars
+        cloud_name: test_cloud
+        api_key: '123456789012345'
+        api_secret: test_secret
         JWT_PASSWORD: secretpasswordforciwhichislongenoughtobasecure32chars
+        SKIP_IMAGE_TESTS: "true"
+        TEST_PORT: 4000
+        TEST_HOST: 127.0.0.1
+        TEST_LISTEN_HOST: 127.0.0.1
+        USE_INJECT: "true"
 
   frontend-check:
     name: Frontend Check & Build
     runs-on: ubuntu-latest
+    env:
+      PUBLIC_API_BASE_URL: http://localhost:3000
     
     steps:
     - uses: actions/checkout@v4

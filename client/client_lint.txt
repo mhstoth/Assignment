@@ -1,0 +1,41 @@
+
+> client@0.0.1 lint
+> eslint .
+
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/auth.ts
+  5:10  warning  'get' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/LeafletMap.svelte
+   73:24  error  'L' is not defined  no-undef
+  102:33  error  'L' is not defined  no-undef
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/lib/components/MiniMap.svelte
+  89:28  error  'L' is not defined  no-undef
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/+page.svelte
+  3:11  warning  'isAuthenticated' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/admin/+page.svelte
+    4:2   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  213:50  warning  'chartName' is defined but never used. Allowed unused args must match /^_/u                                          @typescript-eslint/no-unused-vars
+  260:77  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  260:90  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/dashboard/+page.svelte
+  27:6  warning  'mapReady' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/forgot-password/+page.svelte
+  16:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/login/+page.server.ts
+  2:16  warning  'redirect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/map/+page.svelte
+  13:6  warning  'mapReady' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/moritzhutzler/Library/Mobile Documents/com~apple~CloudDocs/OTH Regensburg/Semester 7/Full Stack Development/Assignment_Level_3_B/Assignment_Level_3_B/client/src/routes/reset-password/+page.svelte
+  32:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 14 problems (4 errors, 10 warnings)
+
